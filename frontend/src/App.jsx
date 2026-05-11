@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Home from "./pages/Home";
+import "./App.css";
 
 function App() {
   const [start, setStart] = useState(false);
@@ -11,8 +12,8 @@ function App() {
   return (
     <div style={{ textAlign: "center", marginTop: "100px" }}>
       <h1>🎟️ Ticket System Demo</h1>
-      <button onClick={() => setStart(true)}>
-        Start Demo
+      <button className="button" onClick={() => setStart(true)}>
+        Enter
       </button>
     </div>
   );

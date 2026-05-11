@@ -2,7 +2,8 @@
 
 ## 專案目錄
 
-1. root
+### 1. root
+
 ````
 etcd-ticket/
 ├── backend/        # Go (API + etcd + WebSocket)
@@ -13,7 +14,8 @@ etcd-ticket/
 
 ````
 
-2. backend (Go)
+### 2. backend (Go)
+
 ```
 backend/
 ├── cmd/
@@ -54,54 +56,59 @@ backend/
 ├── go.mod
 └── go.sum
 ```
-### 目錄說明
+
+#### 目錄說明
+
 - api/ 👉 接收 request（Gin handler）
 - service/ 👉 搶票邏輯（核心）
 - repository/ 👉 操作 etcd
 - lock/ 👉 分散式鎖（重點🔥）
 - watcher/ 👉 etcd watch → WebSocket 推播
 
+### 3. frontend (React)
 
-3. frontend (React)
+- port: 5173
+
 ```
 frontend/
 ├── public/
 │
 ├── src/
-│   ├── api/                 # 呼叫後端
+│   ├── api/                      # 呼叫後端 API
 │   │   └── ticketApi.js
 │   │
-│   ├── components/
-│   │   ├── TicketPanel.jsx  # 票數顯示
-│   │   ├── BuyButton.jsx
-│   │   └── StatusBoard.jsx  # 即時狀態
+│   ├── components/               # 可重複使用元件
+│   │   ├── TicketPanel.jsx       # 顯示剩餘票數
+│   │   ├── BuyButton.jsx         # 購票按鈕
+│   │   └── StatusBoard.jsx       # 即時狀態顯示
 │   │
-│   ├── hooks/
-│   │   └── useWebSocket.js  # WS 封裝
+│   ├── hooks/                    # 自訂 React Hooks
+│   │   └── useWebSocket.js       # WebSocket 封裝
 │   │
-│   ├── pages/
+│   ├── pages/                    # 頁面元件
 │   │   └── Home.jsx
 │   │
-│   ├── context/             # 全域狀態
+│   ├── context/                  # 全域狀態管理
 │   │   └── TicketContext.jsx
 │   │
-│   ├── App.jsx
-│   └── main.jsx
+│   ├── App.jsx                   # App 主元件
+│   └── main.jsx                  # React 入口點
 │
 ├── package.json
 └── vite.config.js
 ```
 
-### 目錄說明
+#### 目錄說明
+
 - api/ 👉 REST API
 - hooks/useWebSocket 👉 接 etcd watch 推播（⭐）
 - context/ 👉 管理票數狀態
 - components/ 👉 UI 分離
 
-4. docker
+### 4. docker
+
 ```
 docker/
 ├── docker-compose.yml   # etcd + backend
 └── etcd.env
 ```
-

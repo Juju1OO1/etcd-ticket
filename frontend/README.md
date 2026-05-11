@@ -1,16 +1,28 @@
-# React + Vite
+### 如何啟動
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```
+cd frontend
+npm create vite@latest .
+npm install
+npm run dev
+```
 
-Currently, two official plugins are available:
+畫面
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+VITE v8.0.11  ready in 191 ms
 
-## React Compiler
+➜  Local:   http://localhost:5173/
+➜  Network: use --host to expose
+➜  press h + enter to show help
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Expanding the ESLint configuration
+### 版本資訊
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. NodeJS
+
+```
+node -v
+v20.20.2
+```

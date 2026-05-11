@@ -4,7 +4,7 @@ export const TicketContext = createContext();
 
 export function TicketProvider({ children }) {
   const [ticket, setTicket] = useState(10);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState("Ready to buy 🎯");
 
   return (
     <TicketContext.Provider
