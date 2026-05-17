@@ -1,0 +1,7 @@
+# 這個config是給GO的client讀取使用的。
+etcd:
+  endpoints:
+    - "localhost:2379"   # etcd1
+    - "localhost:2381"   # etcd2
+    - "localhost:2382"   # etcd3
+  dial_timeout: 5        # # DialTimeout — 建立連線的逾時，單位：秒
