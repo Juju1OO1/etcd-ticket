@@ -41,6 +41,10 @@ import (
 //   - 初始為 "on"；current_limit 降至 0 時設為 "off"
 //   - 前端可直接讀此 key 判斷是否售完，不用每次算 holder 數
 //
+// area{n}/sold/user1,user3(購買成功人的資訊)
+//   - 初始為空
+//   - 在購買完成後寫入。
+//
 // ── 搶票流程 ─────────────────────────────────────────────────────
 //
 // 1. 用戶請求 → 競爭 area{n}/lock（阻塞等待或直接回傳「請稍後」）
@@ -85,6 +89,11 @@ func InitEtcd(ctx context.Context, areas []AreaConfig) error {
 	for _, area := range areas {
 		limitStr := strconv.Itoa(area.Limit)
 
+		//初始化區域的前綴
+		if err := client.Put(ctx, area.Name, "area1 成功添加"); err != nil {
+			return fmt.Errorf("init %s/: %w", area.Name, err)
+		}
+
 		// area{n}/limit/limit — 總票數（唯讀基準值）
 		if err := client.Put(ctx, area.Name+"/limit/limit", limitStr); err != nil {
 			return fmt.Errorf("init %s/limit/limit: %w", area.Name, err)
@@ -106,6 +115,7 @@ func InitEtcd(ctx context.Context, areas []AreaConfig) error {
 
 type TicketData struct {
 	UserName string
+	PhoneNum string
 	Area     int
 }
 
@@ -114,7 +124,7 @@ const payingTTL = 30    // paying 標記的存活時間，覆蓋 Checkout 重試
 
 // ctx代表競爭鎖的人，沒有重刷就繼續等鎖，有重刷就不在對列等待。
 func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
-	area := "/area" + strconv.Itoa(td.Area)
+	area := "area" + strconv.Itoa(td.Area)
 	client := etcd.New()
 	session, err := concurrency.NewSession(client.Cli, concurrency.WithTTL(10))
 	if err != nil {
@@ -157,7 +167,7 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 	if !exist {
 		//沒有該區域
 		mutex.Unlock(ctx)
-		return false, fmt.Errorf("area %s 不存在", area)
+		return false, fmt.Errorf("%s 不存在", area)
 	}
 	i, err := strconv.ParseInt(cur_limit, 10, 64)
 	if err != nil {
@@ -194,7 +204,7 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 // Checkout 在用戶付款完成後呼叫，原子性地刪除 holder 並扣減 current_limit。
 // 若 holder 已過期（超時）回傳錯誤；若 current_limit 被並發修改則自動重試。
 func Checkout(ctx context.Context, td TicketData) error {
-	area := "/area" + strconv.Itoa(td.Area)
+	area := "area" + strconv.Itoa(td.Area)
 	client := etcd.New()
 
 	holderKey := area + "/holder/" + td.UserName
@@ -202,6 +212,7 @@ func Checkout(ctx context.Context, td TicketData) error {
 	statusKey := area + "/status"
 
 	payingKey := area + "/paying/" + td.UserName
+	soldKey := area + "/sold/" + td.UserName
 
 	// 原子操作：驗證 holder 存在的同時建立 paying 標記
 	// 消除「驗證到建立」之間的空窗，防止 holder 在此期間剛好過期
@@ -221,6 +232,7 @@ func Checkout(ctx context.Context, td TicketData) error {
 		return fmt.Errorf("結帳時限已過，請重新搶票")
 	}
 
+	// 迴圈重試修改limit。
 	for {
 		// 讀取目前 current_limit，用來做 CAS 條件
 		curLimitStr, exist, err := client.Get(ctx, currentLimitKey)
@@ -242,6 +254,7 @@ func Checkout(ctx context.Context, td TicketData) error {
 			clientv3.OpDelete(holderKey), // holder 已過期時為 no-op，不影響 Txn 結果
 			clientv3.OpDelete(payingKey), // 結帳完成，清除 paying 標記
 			clientv3.OpPut(currentLimitKey, newLimitStr),
+			clientv3.OpPut(soldKey, td.PhoneNum), // 與 current_limit 同一 Txn，Watcher 可用 ModRevision 比對判斷結帳成功
 		}
 		if curLimit-1 == 0 {
 			// 票賣完，同一個 Txn 內順帶關閉售票

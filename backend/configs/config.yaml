@@ -1,0 +1,6 @@
+etcd:
+  endpoints:
+    - "localhost:2379"   # etcd1
+    - "localhost:2381"   # etcd2
+    - "localhost:2382"   # etcd3
+  dial_timeout: 5
