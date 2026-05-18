@@ -4,3 +4,9 @@ etcd:
     - "localhost:2381"   # etcd2
     - "localhost:2382"   # etcd3
   dial_timeout: 5
+
+database:
+  dsn: "postgres://postgres:password@localhost:5433/etcd_ticket"
+
+redis:
+  addr: "localhost:6379"

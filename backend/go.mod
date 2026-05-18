@@ -3,6 +3,9 @@ module etcd-ticket
 go 1.26.2
 
 require (
+	github.com/google/uuid v1.6.0
+	github.com/jackc/pgx/v5 v5.7.5
+	github.com/redis/go-redis/v9 v9.7.3
 	go.etcd.io/etcd/client/v3 v3.6.11
 	sigs.k8s.io/yaml v1.6.0
 )
