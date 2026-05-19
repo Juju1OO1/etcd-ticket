@@ -22,30 +22,25 @@ func StartOrderWorker(ctx context.Context) {
 	go func() {
 		fmt.Println("[order worker] 啟動，等待訂單訊息...")
 		for {
-			select {
-			case <-ctx.Done():
-				fmt.Println("[order worker] 收到關閉信號，停止")
-				return
-			default:
-				msgs, err := mq.Consume(ctx)
-				if err != nil {
-					if ctx.Err() != nil {
-						return
-					}
-					fmt.Printf("[order worker] consume 失敗: %v\n", err)
+			msgs, err := mq.Consume(ctx)
+			if err != nil {
+				if ctx.Err() != nil {
+					fmt.Println("[order worker] 收到關閉信號，停止")
+					return
+				}
+				fmt.Printf("[order worker] consume 失敗: %v\n", err)
+				continue
+			}
+
+			for _, msg := range msgs {
+				if err := processMessage(ctx, msg.ID, msg.Values); err != nil {
+					fmt.Printf("[order worker] 處理訊息失敗 msgID=%s err=%v\n", msg.ID, err)
+					// 不 Ack，訊息留在 pending list，下次重新消費
 					continue
 				}
-
-				for _, msg := range msgs {
-					if err := processMessage(ctx, msg.ID, msg.Values); err != nil {
-						fmt.Printf("[order worker] 處理訊息失敗 msgID=%s err=%v\n", msg.ID, err)
-						// 不 Ack，訊息留在 pending list，下次重新消費
-						continue
-					}
-					// 寫入成功才 Ack
-					if err := mq.Ack(ctx, msg.ID); err != nil {
-						fmt.Printf("[order worker] ack 失敗 msgID=%s err=%v\n", msg.ID, err)
-					}
+				// 寫入成功才 Ack
+				if err := mq.Ack(ctx, msg.ID); err != nil {
+					fmt.Printf("[order worker] ack 失敗 msgID=%s err=%v\n", msg.ID, err)
 				}
 			}
 		}
