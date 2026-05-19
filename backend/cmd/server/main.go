@@ -6,6 +6,7 @@ import (
 	"etcd-ticket/internal/etcd"
 	"etcd-ticket/internal/mq"
 	"etcd-ticket/internal/service"
+	"etcd-ticket/internal/watcher"
 	"fmt"
 	"os"
 
@@ -65,6 +66,17 @@ func main() {
 		panic(fmt.Sprintf("etcd 初始化失敗: %v", err))
 	}
 	defer etcd.Close()
+
+	errCh, err := watcher.StartHTTPClient(ctx, []int{1, 2}, "127.0.0.1", 8888)
+	if err != nil {
+		panic(fmt.Sprintf("啟動剩餘票數 HTTP client 失敗: %v", err))
+	}
+
+	go func() {
+		for err := range errCh {
+			fmt.Println("送剩餘票數到 websocket server 失敗:", err)
+		}
+	}()
 
 	// TODO: 成員3/4 在這裡啟動 HTTP server
 	fmt.Println("系統啟動完成，等待請求...")
