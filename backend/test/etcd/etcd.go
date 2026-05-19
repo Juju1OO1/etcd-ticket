@@ -1,4 +1,4 @@
-package etcd
+package main
 
 import (
 	"context"
@@ -21,6 +21,7 @@ func main() {
 	testConcurrentLockAndHold(ctx)
 	testCheckout(ctx)
 	testPaymentFailureAndSubstitution(ctx)
+	testTicketWatchers(ctx)
 	fmt.Println("\n========== 所有測試完成 ==========")
 }
 
@@ -32,6 +33,45 @@ func section(name string) {
 
 func pass()              { fmt.Println("結果: PASS ✓") }
 func fail(reason string) { fmt.Printf("結果: FAIL ✗ (%s)\n", reason) }
+
+func receiveInt64(ch <-chan int64, timeout time.Duration) (int64, bool) {
+	select {
+	case value, ok := <-ch:
+		return value, ok
+	case <-time.After(timeout):
+		return 0, false
+	}
+}
+
+func receiveInt64Until(ch <-chan int64, expected int64, timeout time.Duration) (int64, bool) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	var last int64
+	for {
+		select {
+		case value, ok := <-ch:
+			if !ok {
+				return last, false
+			}
+			last = value
+			if value == expected {
+				return value, true
+			}
+		case <-timer.C:
+			return last, false
+		}
+	}
+}
+
+func receiveSoldTicket(ch <-chan service.SoldTicketEvent, timeout time.Duration) (service.SoldTicketEvent, bool) {
+	select {
+	case value, ok := <-ch:
+		return value, ok
+	case <-time.After(timeout):
+		return service.SoldTicketEvent{}, false
+	}
+}
 
 // 清除某區域所有非設定 key，確保每個測試從乾淨狀態開始
 func resetAreaState(ctx context.Context, areaName string) {
@@ -280,5 +320,85 @@ func testPaymentFailureAndSubstitution(ctx context.Context) {
 		pass()
 	} else {
 		fail("最終狀態與預期不符")
+	}
+}
+
+// ─── 測試 5：Ticket Watcher ───────────────────────────────────
+
+func testTicketWatchers(ctx context.Context) {
+	section("測試 5：Ticket Watcher — 剩餘票數與 sold 事件")
+
+	const totalTickets = 2
+	service.InitEtcd(ctx, []service.AreaConfig{{Name: "area1", Limit: totalTickets}})
+	resetAreaState(ctx, "area1")
+
+	watchCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	availableCh, err := service.WatchAvailableTickets(watchCtx, testArea)
+	if err != nil {
+		fail(fmt.Sprintf("WatchAvailableTickets 啟動失敗: %v", err))
+		return
+	}
+
+	soldCh, err := service.WatchSoldTickets(watchCtx, testArea)
+	if err != nil {
+		fail(fmt.Sprintf("WatchSoldTickets 啟動失敗: %v", err))
+		return
+	}
+
+	initialAvailable, ok := receiveInt64(availableCh, 2*time.Second)
+	if !ok {
+		fail("沒有收到初始剩餘票數")
+		return
+	}
+	fmt.Printf("  初始剩餘票數 = %d (預期 %d)\n", initialAvailable, totalTickets)
+
+	tdAlice := service.TicketData{UserName: "alice", PhoneNum: "0911111111", Area: testArea}
+	got, err := service.Lock_And_Hold(ctx, tdAlice)
+	if err != nil || !got {
+		fail(fmt.Sprintf("alice 搶票失敗 err=%v got=%v", err, got))
+		return
+	}
+
+	afterHoldAvailable, ok := receiveInt64(availableCh, 2*time.Second)
+	if !ok {
+		fail("holder 變化後沒有收到剩餘票數")
+		return
+	}
+	fmt.Printf("  alice 搶票後剩餘票數 = %d (預期 1)\n", afterHoldAvailable)
+
+	if err := service.Checkout(ctx, tdAlice); err != nil {
+		fail(fmt.Sprintf("alice 結帳失敗: %v", err))
+		return
+	}
+
+	soldEvent, ok := receiveSoldTicket(soldCh, 2*time.Second)
+	if !ok {
+		fail("結帳後沒有收到 sold event")
+		return
+	}
+	fmt.Printf("  sold event = {UserName:%s Phone:%s AreaID:%d} (預期 alice/0911111111/1)\n",
+		soldEvent.UserName,
+		soldEvent.Phone,
+		soldEvent.AreaID,
+	)
+
+	afterCheckoutAvailable, ok := receiveInt64Until(availableCh, 1, 2*time.Second)
+	if !ok {
+		fail(fmt.Sprintf("結帳後沒有收到預期剩餘票數，最後收到 %d", afterCheckoutAvailable))
+		return
+	}
+	fmt.Printf("  alice 結帳後剩餘票數 = %d (預期 1)\n", afterCheckoutAvailable)
+
+	if initialAvailable == totalTickets &&
+		afterHoldAvailable == 1 &&
+		afterCheckoutAvailable == 1 &&
+		soldEvent.UserName == "alice" &&
+		soldEvent.Phone == "0911111111" &&
+		soldEvent.AreaID == testArea {
+		pass()
+	} else {
+		fail("watcher 收到的資料與預期不符")
 	}
 }
