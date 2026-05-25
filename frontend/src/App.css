@@ -1,0 +1,72 @@
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg, #1e1e2f, #2c2c54);
+  color: white;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* 卡片 */
+.card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  width: 350px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+/* 標題 */
+.title {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+/* 票數 */
+.ticket {
+  font-size: 48px;
+  font-weight: bold;
+  margin: 20px 0;
+}
+
+/* 按鈕 */
+.button {
+  background: #4e8cff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.button:hover {
+  background: #6aa3ff;
+  transform: scale(1.05);
+}
+
+/* 狀態 */
+.status {
+  margin-top: 15px;
+  font-size: 16px;
+}
+
+.success {
+  color: #4cd137;
+}
+
+.error {
+  color: #ff4757;
+}
+
+.warning {
+  color: #ffa502;
+}

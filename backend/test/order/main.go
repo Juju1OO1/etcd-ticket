@@ -13,7 +13,7 @@ func main() {
     ctx := context.Background()
 
     // 初始化 DB 和 Redis
-    if err := db.Init(ctx, "postgres://postgres:password@localhost:5432/etcd_ticket?sslmode=disable"); err != nil {
+    if err := db.Init(ctx, "postgres://postgres:password@localhost:5433/etcd_ticket?sslmode=disable"); err != nil {
         panic(err)
     }
     defer db.Close()
