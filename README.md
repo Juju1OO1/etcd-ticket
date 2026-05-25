@@ -83,49 +83,6 @@ backend/
 
 - port: 5173
 
-### Database & Order Service 說明
-
-搶票成功（Checkout Txn 完成）後，流程如下：
-
-```
-Checkout() 成功
-    ↓
-PublishOrder(ctx, td)             # 成員4 handler 呼叫
-    ↓
-mq.Publish() → XADD               # 寫進 Redis Stream（持久化）
-    ↓
-Redis Stream "order:stream"
-    ↓
-StartOrderWorker() XREADGROUP     # 背景 goroutine 阻塞等待
-    ↓
-processMessage() → InsertOrder()  # 解析訊息，寫入 PostgreSQL
-    ↓
-mq.Ack() → XACK                   # 確認消費，移出 pending list
-```
-
-### 啟動 PostgreSQL + Redis
-
-```bash
-cd backend/internal/db
-docker compose up -d
-```
-
-PostgreSQL port：5433（避免與本機預設 5432 衝突）
-Redis port：6379
-
-### orders 表結構
-
-
-| 欄位       | 型別         | 說明                            |
-| ---------- | ------------ | ------------------------------- |
-| id         | BIGSERIAL    | 自動遞增主鍵                    |
-| order_id   | VARCHAR(36)  | UUID，唯一訂單識別碼            |
-| user_name  | VARCHAR(100) | 購票用戶名稱                    |
-| phone_num  | VARCHAR(20)  | 購票用戶電話                    |
-| area       | INT          | 購票區域編號                    |
-| status     | VARCHAR(20)  | 訂單狀態（success / cancelled） |
-| created_at | TIMESTAMPTZ  | 建立時間（DB 自動填入）         |
-
 ```
 frontend/
 ├── public/
@@ -162,7 +119,50 @@ frontend/
 - context/ 👉 管理票數狀態
 - components/ 👉 UI 分離
 
-### 4. docker
+### 4. Database & Order Service 說明
+
+搶票成功（Checkout Txn 完成）後，流程如下：
+
+```
+Checkout() 成功
+    ↓
+PublishOrder(ctx, td)             # 成員4 handler 呼叫
+    ↓
+mq.Publish() → XADD               # 寫進 Redis Stream（持久化）
+    ↓
+Redis Stream "order:stream"
+    ↓
+StartOrderWorker() XREADGROUP     # 背景 goroutine 阻塞等待
+    ↓
+processMessage() → InsertOrder()  # 解析訊息，寫入 PostgreSQL
+    ↓
+mq.Ack() → XACK                   # 確認消費，移出 pending list
+```
+
+#### 啟動 PostgreSQL + Redis
+
+```bash
+cd backend/internal/db
+docker compose up -d
+```
+
+PostgreSQL port：5433（避免與本機預設 5432 衝突）
+Redis port：6379
+
+### orders 表結構
+
+
+| 欄位       | 型別         | 說明                            |
+| ---------- | ------------ | ------------------------------- |
+| id         | BIGSERIAL    | 自動遞增主鍵                    |
+| order_id   | VARCHAR(36)  | UUID，唯一訂單識別碼            |
+| user_name  | VARCHAR(100) | 購票用戶名稱                    |
+| phone_num  | VARCHAR(20)  | 購票用戶電話                    |
+| area       | INT          | 購票區域編號                    |
+| status     | VARCHAR(20)  | 訂單狀態（success / cancelled） |
+| created_at | TIMESTAMPTZ  | 建立時間（DB 自動填入）         |
+
+### 5. docker
 
 ```
 docker/
