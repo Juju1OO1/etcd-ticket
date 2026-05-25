@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"etcd-ticket/internal/api"
 	"etcd-ticket/internal/db"
 	"etcd-ticket/internal/etcd"
 	"etcd-ticket/internal/mq"
@@ -14,12 +15,19 @@ import (
 )
 
 type AppConfig struct {
+	Server struct {
+		Port int `yaml:"port"`
+	} `yaml:"server"`
 	Database struct {
 		DSN string `yaml:"dsn"`
 	} `yaml:"database"`
 	Redis struct {
 		Addr string `yaml:"addr"`
 	} `yaml:"redis"`
+	RateLimit struct {
+		RPS   float64 `yaml:"rps"`
+		Burst int     `yaml:"burst"`
+	} `yaml:"rate_limit"`
 }
 
 func loadAppConfig(path string) (AppConfig, error) {
@@ -78,7 +86,14 @@ func main() {
 		}
 	}()
 
-	// TODO: 成員3/4 在這裡啟動 HTTP server
-	fmt.Println("系統啟動完成，等待請求...")
-	select {}
+	// 啟動 HTTP server（API Gateway）
+	router := api.NewRouter(api.RateLimitConfig{
+		RPS:   cfg.RateLimit.RPS,
+		Burst: cfg.RateLimit.Burst,
+	})
+	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	fmt.Printf("系統啟動完成，HTTP server 監聽 %s\n", addr)
+	if err := router.Run(addr); err != nil {
+		panic(fmt.Sprintf("HTTP server 啟動失敗: %v", err))
+	}
 }
