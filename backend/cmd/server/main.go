@@ -16,8 +16,8 @@ import (
 
 type AppConfig struct {
 	Server struct {
-		Port int `yaml:"port"`
-	} `yaml:"server"`
+		Port int `json:"port"`
+	} `json:"server"`
 	Database struct {
 		DSN string `yaml:"dsn"`
 	} `yaml:"database"`
@@ -25,9 +25,9 @@ type AppConfig struct {
 		Addr string `yaml:"addr"`
 	} `yaml:"redis"`
 	RateLimit struct {
-		RPS   float64 `yaml:"rps"`
-		Burst int     `yaml:"burst"`
-	} `yaml:"rate_limit"`
+		RPS   float64 `json:"rps"`
+		Burst int     `json:"burst"`
+	} `json:"rate_limit"`
 }
 
 func loadAppConfig(path string) (AppConfig, error) {
@@ -92,6 +92,7 @@ func main() {
 		Burst: cfg.RateLimit.Burst,
 	})
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
+	fmt.Printf("Rate limit 設定：rps=%.0f burst=%d\n", cfg.RateLimit.RPS, cfg.RateLimit.Burst)
 	fmt.Printf("系統啟動完成，HTTP server 監聽 %s\n", addr)
 	if err := router.Run(addr); err != nil {
 		panic(fmt.Sprintf("HTTP server 啟動失敗: %v", err))

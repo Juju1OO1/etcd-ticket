@@ -15,5 +15,5 @@ redis:
   addr: "localhost:6379"
 
 rate_limit:
-  rps: 20      # per-IP 每秒允許速率
-  burst: 40    # per-IP token bucket 容量（瞬時可消耗的上限）
+  rps: 1000    # per-IP 每秒允許速率（測試用寬鬆值，demo 前再調回合理範圍）
+  burst: 2000  # per-IP token bucket 容量
