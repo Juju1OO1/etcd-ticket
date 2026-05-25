@@ -169,3 +169,8 @@ docker/
 ├── docker-compose.yml   # etcd + backend
 └── etcd.env
 ```
+
+## 環境需求
+
+1. NodeJS``` 20.20.2```
+2. Go ```1.36.3```
