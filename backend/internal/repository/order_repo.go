@@ -11,6 +11,7 @@ func InsertOrder(ctx context.Context, order model.Order) error {
 	sql := `
 		INSERT INTO orders (order_id, user_name, phone_num, area, status)
 		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (user_name, area) DO NOTHING
 	`
 	_, err := db.Get().Exec(ctx, sql,
 		order.OrderID,
