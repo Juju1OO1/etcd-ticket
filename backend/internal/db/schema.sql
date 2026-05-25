@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS orders (
     phone_num  VARCHAR(20)  NOT NULL,
     area       INT          NOT NULL,
     status     VARCHAR(20)  NOT NULL DEFAULT 'success',
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+    UNIQUE (user_name, area)
 );
 
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_name);
