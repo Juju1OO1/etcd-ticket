@@ -16,6 +16,11 @@ etcd-ticket/
 
 ### 2. backend (Go)
 
+- etcd1: 2379
+- etcd2: 2381
+- etcd3: 2382
+- api gateway: 8080
+
 ```
 backend/
 ├── cmd/
@@ -71,11 +76,15 @@ backend/
 
 ### 目錄說明
 
+- cmd: 初始化整個系統
 - api/ 👉 接收 request（Gin handler）
 - service/ 👉 搶票邏輯（核心）+ 訂單發布與消費
 - repository/ 👉 PostgreSQL 操作（InsertOrder）
 - mq/ 👉 Redis Stream 訊息佇列（Publish / Consume / Ack）
 - db/ 👉 PostgreSQL 連線池、Schema、Docker 設定
+- etcd/
+  - etcd-cluster: 三個 etcd 的 docker-compose
+  - client: 將三個 etcd 打包成一個單一服務、定義 method
 - lock/ 👉 分散式鎖（重點🔥）
 - watcher/ 👉 etcd watch → WebSocket 推播
 
@@ -162,7 +171,7 @@ Redis port：6379
 | status     | VARCHAR(20)  | 訂單狀態（success / cancelled） |
 | created_at | TIMESTAMPTZ  | 建立時間（DB 自動填入）         |
 
-### 5. docker
+### 5. docker (最後實作)
 
 ```
 docker/
@@ -173,4 +182,50 @@ docker/
 ## 環境需求
 
 1. NodeJS``` 20.20.2```
-2. Go ```1.36.3```
+2. Go ```1.26.2```
+
+## 如何啟動
+
+安裝完環境以後依照以下步驟
+
+1. 啟動 DB and Redis :5433 :6379
+
+```
+// 目錄
+cd backend/internal/db
+
+// 啟動
+docker-compose up -d
+```
+
+2. 啟動 etcd :2379 :2381:2382
+
+```
+// 目錄
+cd backend/internal/etcd/etcd-cluster
+
+// 啟動 
+docker-compose up -d
+```
+
+3. 啟動 API Gateway :8080
+
+```
+//目錄
+cd backend
+
+// 啟動
+go run cmd/server/main.go &
+```
+
+4. 啟動前端
+
+```
+// 目錄
+cd frontend
+
+// 啟動
+npm create vite@latest .
+npm install
+npm run dev
+```
