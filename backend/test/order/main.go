@@ -33,6 +33,8 @@ func main() {
         {UserName: "carol", PhoneNum: "0933333333", Area: 2},
         {UserName: "dave", PhoneNum: "0944444444", Area: 2},
         {UserName: "eve", PhoneNum: "0955555555", Area: 1},
+        // 重複訂單測試：alice area1 重複，應被 ON CONFLICT 略過
+        {UserName: "alice", PhoneNum: "0911111111", Area: 1},
     }
 
     for _, td := range users {
@@ -45,5 +47,5 @@ func main() {
 
     fmt.Println("等待 worker 寫入 DB...")
     time.Sleep(3 * time.Second)
-    fmt.Println("完成，去 DB 確認 orders table 有沒有 5 筆資料")
+    fmt.Println("完成，去 DB 確認 orders table 應有 5 筆（alice 重複那筆被略過）")
 }
