@@ -1,6 +1,6 @@
 package etcd
 
-// 這個檔案提供給需要建立client並對etcd server進行操作的檔案一個入口
+// 這個檔案提供給需要建立 client 並對etcd server進行操作的檔案一個入口
 // 外部檔案使用client就能對server下指令進行操作
 
 import (
