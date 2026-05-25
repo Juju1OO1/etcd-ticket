@@ -1,10 +1,14 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
+
+	"etcd-ticket/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +25,47 @@ func newReq(method, path string) *http.Request {
 	return r
 }
 
+func newJSONReq(method, path, body string) *http.Request {
+	r := httptest.NewRequest(method, path, strings.NewReader(body))
+	r.Header.Set("Content-Type", "application/json")
+	r.RemoteAddr = "10.0.0.1:1234"
+	return r
+}
+
+func stubHandlers(t *testing.T) {
+	t.Helper()
+
+	prevReserve := reserveTicketFn
+	prevCheckout := checkoutTicketFn
+	prevPublish := publishOrderFn
+	prevAvailable := availableTicketsFn
+	prevLoadStatus := loadAreaStatusFn
+
+	reserveTicketFn = func(context.Context, service.TicketData) (bool, error) {
+		return true, nil
+	}
+	checkoutTicketFn = func(context.Context, service.TicketData) error {
+		return nil
+	}
+	publishOrderFn = func(context.Context, service.TicketData) error {
+		return nil
+	}
+	availableTicketsFn = func(context.Context, int) (int64, error) {
+		return 42, nil
+	}
+	loadAreaStatusFn = func(context.Context, int) (string, error) {
+		return "on", nil
+	}
+
+	t.Cleanup(func() {
+		reserveTicketFn = prevReserve
+		checkoutTicketFn = prevCheckout
+		publishOrderFn = prevPublish
+		availableTicketsFn = prevAvailable
+		loadAreaStatusFn = prevLoadStatus
+	})
+}
+
 func TestHealthz_200(t *testing.T) {
 	r := NewRouter(RateLimitConfig{RPS: 100, Burst: 100})
 	w := httptest.NewRecorder()
@@ -30,21 +75,33 @@ func TestHealthz_200(t *testing.T) {
 	}
 }
 
-func TestReserveStub_501(t *testing.T) {
+func TestReserveOK(t *testing.T) {
+	stubHandlers(t)
 	r := NewRouter(RateLimitConfig{RPS: 100, Burst: 100})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, newReq(http.MethodPost, "/api/tickets/reserve"))
-	if w.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501, got %d body=%s", w.Code, w.Body.String())
+	r.ServeHTTP(w, newJSONReq(http.MethodPost, "/api/tickets/reserve", `{"user_name":"alice","phone_num":"0911111111","area":1}`))
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", w.Code, w.Body.String())
 	}
 }
 
-func TestCheckoutStub_501(t *testing.T) {
+func TestCheckoutOK(t *testing.T) {
+	stubHandlers(t)
 	r := NewRouter(RateLimitConfig{RPS: 100, Burst: 100})
 	w := httptest.NewRecorder()
-	r.ServeHTTP(w, newReq(http.MethodPost, "/api/tickets/checkout"))
-	if w.Code != http.StatusNotImplemented {
-		t.Fatalf("expected 501, got %d body=%s", w.Code, w.Body.String())
+	r.ServeHTTP(w, newJSONReq(http.MethodPost, "/api/tickets/checkout", `{"user_name":"alice","phone_num":"0911111111","area":1}`))
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", w.Code, w.Body.String())
+	}
+}
+
+func TestStatusOK(t *testing.T) {
+	stubHandlers(t)
+	r := NewRouter(RateLimitConfig{RPS: 100, Burst: 100})
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, newReq(http.MethodGet, "/api/tickets/status"))
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body=%s", w.Code, w.Body.String())
 	}
 }
 
@@ -61,6 +118,7 @@ func TestUnknownPath_404(t *testing.T) {
 // 因為 burst=5，前 5 個可通過；rps=1 表示一秒只補 1 token，迴圈在 ms 內完成，
 // 所以幾乎所有後續請求都會被擋。
 func TestRateLimit_Blocks(t *testing.T) {
+	stubHandlers(t)
 	r := NewRouter(RateLimitConfig{RPS: 1, Burst: 5})
 
 	var pass, blocked int
@@ -70,7 +128,7 @@ func TestRateLimit_Blocks(t *testing.T) {
 		switch w.Code {
 		case http.StatusTooManyRequests:
 			blocked++
-		case http.StatusNotImplemented: // stub
+		case http.StatusOK:
 			pass++
 		default:
 			t.Fatalf("unexpected status %d body=%s", w.Code, w.Body.String())
