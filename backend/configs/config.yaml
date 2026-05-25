@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+etcd:
+  endpoints:
+    - "localhost:2379"   # etcd1
+    - "localhost:2381"   # etcd2
+    - "localhost:2382"   # etcd3
+  dial_timeout: 5
+
+database:
+  dsn: "postgres://postgres:password@localhost:5433/etcd_ticket"
+
+redis:
+  addr: "localhost:6379"
+
+rate_limit:
+  rps: 20      # per-IP 每秒允許速率
+  burst: 40    # per-IP token bucket 容量（瞬時可消耗的上限）
