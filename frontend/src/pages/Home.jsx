@@ -20,7 +20,7 @@ export default function Home({setPage}) {
 
       setLogs((prev) => [
 
-        `${data.node} sold ticket #${data.ticket_id}`,
+        `🔥 ${data.user} bought Area-${data.area} ticket`,
 
         ...prev,
       ]);
@@ -48,9 +48,9 @@ export default function Home({setPage}) {
 
           body: JSON.stringify({
 
-            userName: "john",
+            user_name: "john",
 
-            phoneNum: "0912345678",
+            phone_num: "0912345678",
 
             area: 1,
 
@@ -60,10 +60,14 @@ export default function Home({setPage}) {
 
     const data = await res.json();
 
-    setStatus(data.message);
+    console.log(data);
+
+    setStatus(
+      data.message || "Reserved"
+    );
 
     // 搶票成功
-    if (data.success) {
+    if (data.data?.reserved) {
 
       // 進付款頁
       setPage("userinfo");
@@ -87,7 +91,25 @@ export default function Home({setPage}) {
   return (
     <div className="container">
       <div className="card">
-        <h1 className="title">🎟️ Ticket System</h1>
+        <h1 className="title">
+          🎟️ Ticket System
+        </h1>
+
+        {/* LIVE EVENTS */}
+        <div className="logs">
+
+          <h3>Realtime Events</h3>
+
+          {logs.map((log, idx) => (
+
+            <div key={idx} className="log-item">
+              {log}
+            </div>
+
+          ))}
+
+        </div>
+
 
         <div className="ticket">
           {ticket === 0 ? "SOLD OUT" : ticket}
@@ -106,20 +128,7 @@ export default function Home({setPage}) {
         </div>
 
         {/* realtime logs */}
-        <div className="logs">
-
-          <h3>Realtime Events</h3>
-
-          {logs.map((log, idx) => (
-
-            <div key={idx} className="log-item">
-              {log}
-            </div>
-
-          ))}
-
-        </div>
-
+        
 
 
 

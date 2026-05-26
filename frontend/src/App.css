@@ -194,3 +194,77 @@ body {
 
   color: #00ff99;
 }
+
+
+.live-feed {
+
+  width: 100%;
+
+  margin-top: 20px;
+
+  margin-bottom: 30px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  border-radius: 14px;
+
+  padding: 16px;
+
+  overflow: hidden;
+}
+
+.live-title {
+
+  font-size: 0.9rem;
+
+  font-weight: bold;
+
+  color: #ffcc00;
+
+  margin-bottom: 12px;
+
+  letter-spacing: 1px;
+}
+
+.live-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  max-height: 120px;
+
+  overflow-y: auto;
+}
+
+.live-item {
+
+  color: #00ff99;
+
+  font-size: 0.95rem;
+
+  animation:
+    fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(-8px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}

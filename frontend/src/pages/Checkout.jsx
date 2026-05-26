@@ -54,8 +54,7 @@ export default function Checkout({
 
       // checkout success
       if (
-        data.checked_out ||
-        data.success
+        data.data?.checked_out
       ) {
 
         setPage("success");
