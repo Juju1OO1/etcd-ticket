@@ -1,21 +1,76 @@
 import { useState } from "react";
+
 import Home from "./pages/Home";
+import Checkout from "./pages/Checkout";
+import Success from "./pages/Success";
+import UserInfo from "./pages/UserInfo";
+
 import "./App.css";
 
 function App() {
-  const [start, setStart] = useState(false);
 
-  if (start) {
-    return <Home />;
+  const [page, setPage] =
+    useState("landing");
+
+  // ====================================
+  // landing
+  // ====================================
+
+  if (page === "landing") { 
+
+    return (
+      <div className="landing">
+        <h1>
+          🎟️ Ticket System Demo
+        </h1>
+        <button
+          className="button"
+          onClick={() => setPage("home")}
+        >
+          Enter
+        </button>
+
+      </div>
+    );
   }
 
+  // ====================================
+  // checkout
+  // ====================================
+
+  if (page === "checkout") {
+    return (
+    <Checkout setPage={setPage} />
+  );
+  }
+
+  // ====================================
+  // Payment Success
+  // ====================================
+
+  if (page === "success") {
+    return (
+    <Success setPage={setPage} />
+  );
+}
+
+  // ====================================
+  // UserInfo
+  // ====================================
+
+  if (page === "userinfo") {
+    return (
+      <UserInfo setPage={setPage} />
+    );
+  }
+
+
+  // ====================================
+  // home
+  // ====================================
+
   return (
-    <div style={{ textAlign: "center", marginTop: "100px" }}>
-      <h1>🎟️ Ticket System Demo</h1>
-      <button className="button" onClick={() => setStart(true)}>
-        Enter
-      </button>
-    </div>
+    <Home setPage={setPage} />
   );
 }
 

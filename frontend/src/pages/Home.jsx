@@ -3,7 +3,7 @@ import { TicketContext } from "../context/TicketContext";
 import useWebSocket from "../hooks/useWebSocket";
 import "./../App.css";
 
-export default function Home() {
+export default function Home({setPage}) {
   const { ticket, setTicket, status, setStatus, logs, setLogs } = useContext(TicketContext);
 
   useWebSocket((data) => {
@@ -31,8 +31,51 @@ export default function Home() {
   });
 
   const handleBuy = async () => {
+
     setStatus("Processing...");
-  };
+
+    try {
+
+      const res = await fetch(
+        "http://localhost:8080/api/tickets/reserve",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+
+            userName: "john",
+
+            phoneNum: "0912345678",
+
+            area: 1,
+
+          }),
+        }
+      );
+
+    const data = await res.json();
+
+    setStatus(data.message);
+
+    // 搶票成功
+    if (data.success) {
+
+      // 進付款頁
+      setPage("userinfo");
+    }
+
+  } catch {
+
+    setStatus(
+      "❌ Backend Error"
+    );
+  }
+};
 
   const getStatusClass = () => {
     if (status.includes("Success")) return "success";
