@@ -4,7 +4,7 @@ import useWebSocket from "../hooks/useWebSocket";
 import "./../App.css";
 
 export default function Home() {
-  const { ticket, setTicket, status, setStatus } = useContext(TicketContext);
+  const { ticket, setTicket, status, setStatus, logs, setLogs } = useContext(TicketContext);
 
   useWebSocket((data) => {
     if (data.type === "ticket_update") {
@@ -14,6 +14,20 @@ export default function Home() {
     if (data.type === "buy_result") {
       setStatus(data.message);
     }
+
+    // distributed log
+    if (data.type === "sold_log") {
+
+      setLogs((prev) => [
+
+        `${data.node} sold ticket #${data.ticket_id}`,
+
+        ...prev,
+      ]);
+    }
+
+
+
   });
 
   const handleBuy = async () => {
@@ -47,6 +61,25 @@ export default function Home() {
         <div className={`status ${getStatusClass()}`}>
           {status}
         </div>
+
+        {/* realtime logs */}
+        <div className="logs">
+
+          <h3>Realtime Events</h3>
+
+          {logs.map((log, idx) => (
+
+            <div key={idx} className="log-item">
+              {log}
+            </div>
+
+          ))}
+
+        </div>
+
+
+
+
       </div>
     </div>
   );
