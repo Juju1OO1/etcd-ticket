@@ -7,6 +7,7 @@ import (
 	"etcd-ticket/internal/etcd"
 	"etcd-ticket/internal/mq"
 	"etcd-ticket/internal/service"
+	"etcd-ticket/internal/wsserver"
 	"etcd-ticket/internal/watcher"
 	"fmt"
 	"os"
@@ -74,6 +75,10 @@ func main() {
 		panic(fmt.Sprintf("etcd 初始化失敗: %v", err))
 	}
 	defer etcd.Close()
+
+	if err := wsserver.Start(ctx, "127.0.0.1", 8888); err != nil {
+		panic(fmt.Sprintf("啟動 websocket server 失敗: %v", err))
+	}
 
 	errCh, err := watcher.StartHTTPClient(ctx, []int{1, 2}, "127.0.0.1", 8888)
 	if err != nil {
