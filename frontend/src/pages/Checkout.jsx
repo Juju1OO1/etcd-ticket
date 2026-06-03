@@ -12,6 +12,16 @@ export default function Checkout({
   const [status, setStatus] =
     useState("");
 
+
+  const userName =
+  localStorage.getItem("userName");
+
+  const phoneNum =
+  localStorage.getItem("phoneNum");
+
+  const area =
+  localStorage.getItem("selectedArea");
+
   // ====================================
   // pay
   // ====================================
@@ -38,11 +48,11 @@ export default function Checkout({
 
           body: JSON.stringify({
 
-            user_name: "john",
+            user_name: userName,
 
-            phone_num: "0912345678",
+            phone_num: phoneNum,
 
-            area: 1,
+            area: Number(area),
 
           }),
         }

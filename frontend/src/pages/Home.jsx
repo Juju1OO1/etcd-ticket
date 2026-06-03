@@ -74,6 +74,11 @@ export default function Home({setPage}) {
     // 搶票成功
     if (data.data?.reserved) {
 
+      localStorage.setItem(
+        "selectedArea",
+        selectedArea
+      );
+
       // 進付款頁
       setPage("checkout");
     }
