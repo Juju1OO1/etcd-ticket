@@ -14,8 +14,17 @@ export default function UserInfo({
 
 
   const handleNext = () => {
+    if (!userName.trim()) {
+        alert("Please enter your User name");
+        return;
+      }
 
-        localStorage.setItem(
+      if (!phoneNum.trim()) {
+        alert("Please enter your Phone number");
+        return;
+      }
+
+      localStorage.setItem(
         "userName",
         userName
       );
@@ -25,8 +34,9 @@ export default function UserInfo({
         phoneNum
       );
 
-    setPage("home");
-  };
+  setPage("home");
+};
+ 
 
   return (
 

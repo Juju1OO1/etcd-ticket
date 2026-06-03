@@ -75,7 +75,7 @@ export default function Home({setPage}) {
     if (data.data?.reserved) {
 
       // 進付款頁
-      setPage("userinfo");
+      setPage("checkout");
     }
 
   } catch {

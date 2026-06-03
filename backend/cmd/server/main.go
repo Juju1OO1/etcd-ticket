@@ -17,18 +17,21 @@ import (
 
 type AppConfig struct {
 	Server struct {
-		Port int `yaml:"port"`
-	} `yaml:"server"`
+		Port int `yaml:"port" json:"port"`
+	} `yaml:"server" json:"server"`
+
 	Database struct {
-		DSN string `yaml:"dsn"`
-	} `yaml:"database"`
+		DSN string `yaml:"dsn" json:"dsn"`
+	} `yaml:"database" json:"database"`
+
 	Redis struct {
-		Addr string `yaml:"addr"`
-	} `yaml:"redis"`
+		Addr string `yaml:"addr" json:"addr"`
+	} `yaml:"redis" json:"redis"`
+
 	RateLimit struct {
-		RPS   float64 `yaml:"rps"`
-		Burst int     `yaml:"burst"`
-	} `yaml:"rate_limit"`
+		RPS   float64 `yaml:"rps" json:"rps"`
+		Burst int     `yaml:"burst" json:"burst"`
+	} `yaml:"rate_limit" json:"rate_limit"`
 }
 
 func loadAppConfig(path string) (AppConfig, error) {
@@ -50,6 +53,8 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("讀取 config 失敗: %v", err))
 	}
+
+	fmt.Printf("CONFIG=%+v\n", cfg)
 
 	// 初始化 PostgreSQL
 	if err := db.Init(ctx, cfg.Database.DSN); err != nil {
