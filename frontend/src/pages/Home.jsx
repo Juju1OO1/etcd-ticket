@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { TicketContext } from "../context/TicketContext";
 import useWebSocket from "../hooks/useWebSocket";
+import { useEffect } from "react";
 import "./../App.css";
 
 export default function Home({setPage}) {
@@ -13,15 +14,20 @@ export default function Home({setPage}) {
 
   useWebSocket((data) => {
     if (data.type === "ticket_available") {
-      setTicket(data.count);
-    }
+      setTicket(prev => ({
+        ...prev,
+        [data.area_id]:
+        data.available,
+      }));
+
+}
 
     if (data.type === "ticket_sold") {
       setStatus(data.message);
     }
 
     // distributed log
-    if (data.type === "sold_log") {
+    if (data.type === "ticket_sold") {
 
       setLogs((prev) => [
 
@@ -34,6 +40,10 @@ export default function Home({setPage}) {
 
 
   });
+
+
+  
+
 
   const handleBuy = async () => {
 
@@ -68,7 +78,7 @@ export default function Home({setPage}) {
     console.log(data);
 
     setStatus(
-      data.message || "Reserved"
+      "Ready to buy 🎯"
     );
 
     // 搶票成功
@@ -97,6 +107,31 @@ export default function Home({setPage}) {
     if (status.includes("Processing")) return "warning";
     return "";
   };
+
+  useEffect(() => {
+
+  fetch(
+    "http://localhost:8080/api/tickets/status"
+  )
+    .then(res => res.json())
+    .then(res => {
+
+      const areas =
+        res.data?.areas || [];
+
+      const map = {};
+
+      areas.forEach(area => {
+        map[area.area_id] =
+          area.available;
+      });
+
+      setTicket(map);
+
+    });
+
+}, []);
+
 
   return (
     <div className="container">
@@ -146,15 +181,17 @@ export default function Home({setPage}) {
 
 
         <div className="ticket">
-          {ticket === 0 ? "SOLD OUT" : ticket}
+          {ticket[selectedArea] === 0
+            ? "SOLD OUT"
+            : ticket[selectedArea]}
         </div>
         
         <button
           className="button"
-          disabled={ticket === 0}
+          disabled={ticket[selectedArea] === 0}
           onClick={handleBuy}
           >
-            {ticket === 0 ? "Sold Out" : "Buy Ticket"}
+            {ticket[selectedArea] === 0 ? "Sold Out" : "Buy Ticket"}
         </button>
 
         <div className={`status ${getStatusClass()}`}>

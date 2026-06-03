@@ -85,6 +85,7 @@ func main() {
 		panic(fmt.Sprintf("啟動 websocket server 失敗: %v", err))
 	}
 
+	// available ticket
 	errCh, err := watcher.StartHTTPClient(ctx, []int{1, 2}, "127.0.0.1", 8888)
 	if err != nil {
 		panic(fmt.Sprintf("啟動剩餘票數 HTTP client 失敗: %v", err))
@@ -94,6 +95,29 @@ func main() {
 	go func() {
 		for err := range errCh {
 			fmt.Println("送剩餘票數到 websocket server 失敗:", err)
+		}
+	}()
+
+	// sold ticket
+	soldErrCh, err := watcher.StartSoldTicketHTTPClient(
+		ctx,
+		[]int{1, 2},
+		"127.0.0.1",
+		8888,
+	)
+	if err != nil {
+		panic(fmt.Sprintf(
+			"啟動成交紀錄 HTTP client 失敗: %v",
+			err,
+		))
+	}
+
+	go func() {
+		for err := range soldErrCh {
+			fmt.Println(
+				"送成交紀錄到 websocket server 失敗:",
+				err,
+			)
 		}
 	}()
 
