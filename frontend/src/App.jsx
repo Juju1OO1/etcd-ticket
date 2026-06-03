@@ -25,7 +25,7 @@ function App() {
         </h1>
         <button
           className="button"
-          onClick={() => setPage("home")}
+          onClick={() => setPage("userinfo")}
         >
           Enter
         </button>
@@ -35,7 +35,7 @@ function App() {
   }
 
   // ====================================
-  // checkout
+  // checkout(Payment Info)
   // ====================================
 
   if (page === "checkout") {
@@ -43,6 +43,9 @@ function App() {
     <Checkout setPage={setPage} />
   );
   }
+
+
+
 
   // ====================================
   // Payment Success

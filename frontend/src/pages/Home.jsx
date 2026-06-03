@@ -4,14 +4,19 @@ import useWebSocket from "../hooks/useWebSocket";
 import "./../App.css";
 
 export default function Home({setPage}) {
-  const { ticket, setTicket, status, setStatus, logs, setLogs } = useContext(TicketContext);
+  const { ticket, setTicket, status, setStatus, logs, setLogs, selectedArea, setSelectedArea } = useContext(TicketContext);
+  
+  // 上一頁 UserInfo 的資訊暫存在 local
+  const userName = localStorage.getItem("userName");
+  const phoneNum = localStorage.getItem("phoneNum");
+
 
   useWebSocket((data) => {
-    if (data.type === "ticket_update") {
+    if (data.type === "ticket_available") {
       setTicket(data.count);
     }
 
-    if (data.type === "buy_result") {
+    if (data.type === "ticket_sold") {
       setStatus(data.message);
     }
 
@@ -48,11 +53,11 @@ export default function Home({setPage}) {
 
           body: JSON.stringify({
 
-            user_name: "john",
+            user_name: userName,
 
-            phone_num: "0912345678",
+            phone_num: phoneNum,
 
-            area: 1,
+            area: selectedArea,
 
           }),
         }
@@ -92,7 +97,7 @@ export default function Home({setPage}) {
     <div className="container">
       <div className="card">
         <h1 className="title">
-          🎟️ Ticket System
+          🎟️ World Tour
         </h1>
 
         {/* LIVE EVENTS */}
@@ -109,6 +114,30 @@ export default function Home({setPage}) {
           ))}
 
         </div>
+
+        <div className="area-selector">
+
+          <h3>Select Area</h3>
+
+          <select
+            className="area-select"
+            value={selectedArea}
+            onChange={(e) =>
+              setSelectedArea(Number(e.target.value))
+            }
+          >
+            <option value={1}>
+              Area 1
+            </option>
+
+            <option value={2}>
+              Area 2
+            </option>
+
+          </select>
+
+        </div>
+ 
 
 
         <div className="ticket">

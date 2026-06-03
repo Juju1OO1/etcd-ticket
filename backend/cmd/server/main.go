@@ -7,8 +7,8 @@ import (
 	"etcd-ticket/internal/etcd"
 	"etcd-ticket/internal/mq"
 	"etcd-ticket/internal/service"
-	"etcd-ticket/internal/wsserver"
 	"etcd-ticket/internal/watcher"
+	"etcd-ticket/internal/wsserver"
 	"fmt"
 	"os"
 
@@ -84,6 +84,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("啟動剩餘票數 HTTP client 失敗: %v", err))
 	}
+	fmt.Println("WebSocket Server 啟動完成 :8888")
 
 	go func() {
 		for err := range errCh {

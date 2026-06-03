@@ -268,3 +268,24 @@ body {
       translateY(0);
   }
 }
+
+.area-selector {
+  margin: 20px 0;
+}
+
+.area-select {
+
+  width: 100%;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  border: 1px solid #ccc;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  background: white;
+}
