@@ -12,6 +12,15 @@ export default function Checkout({
   const [status, setStatus] =
     useState("");
 
+  const [cardNumber, setCardNumber] =
+    useState("");
+
+  const [cardHolder, setCardHolder] =
+    useState("");
+
+  const [cvv, setCvv] =
+    useState("");
+
   const [timeLeft, setTimeLeft] =
   useState(300);
 
@@ -60,6 +69,11 @@ export default function Checkout({
   // ====================================
 
   const handlePay = async () => {
+
+    if (!cardNumber.trim() || !cardHolder.trim() || !cvv.trim()) {
+      setStatus("❌ Please fill in all card details");
+      return;
+    }
 
     setLoading(true);
 
@@ -149,16 +163,22 @@ export default function Checkout({
         <input
           className="input"
           placeholder="Card Number"
+          value={cardNumber}
+          onChange={(e) => setCardNumber(e.target.value)}
         />
 
         <input
           className="input"
           placeholder="Card Holder"
+          value={cardHolder}
+          onChange={(e) => setCardHolder(e.target.value)}
         />
 
         <input
           className="input"
           placeholder="CVV"
+          value={cvv}
+          onChange={(e) => setCvv(e.target.value)}
         />
 
         <button
