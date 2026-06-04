@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import "./../App.css";
 
 export default function Home({setPage}) {
-  const { ticket, setTicket, status, setStatus, logs, setLogs, selectedArea, setSelectedArea } = useContext(TicketContext);
+  const { ticket, setTicket, status, setStatus, logs, selectedArea, setSelectedArea } = useContext(TicketContext);
   
   // 上一頁 UserInfo 的資訊暫存在 local
   const userName = localStorage.getItem("userName");
@@ -117,21 +117,6 @@ export default function Home({setPage}) {
           🎟️ World Tour
         </h1>
 
-        {/* LIVE EVENTS */}
-        <div className="logs">
-
-          <h3>Realtime Events</h3>
-
-          {logs.map((log, idx) => (
-
-            <div key={idx} className="log-item">
-              {log}
-            </div>
-
-          ))}
-
-        </div>
-
         <div className="area-selector">
 
           <h3>Select Area</h3>
@@ -163,19 +148,20 @@ export default function Home({setPage}) {
             : ticket[selectedArea]}
         </div>
         
-        <button
-          className="button"
-          disabled={ticket[selectedArea] === 0}
-          onClick={handleBuy}
+        {ticket[selectedArea] > 0 && (
+          <button
+            className="button"
+            onClick={handleBuy}
           >
-            {ticket[selectedArea] === 0 ? "Sold Out" : "Buy Ticket"}
-        </button>
+            Buy Ticket
+          </button>
+
+        )}
 
         <div className={`status ${getStatusClass()}`}>
           {status}
         </div>
 
-        {/* realtime logs */}
         
 
 

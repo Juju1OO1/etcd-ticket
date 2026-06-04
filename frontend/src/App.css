@@ -289,3 +289,79 @@ body {
 
   background: white;
 }
+
+
+.toast-wrapper {
+
+  position: fixed;
+
+  bottom: 20px;
+  right: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  z-index: 9999;
+}
+
+.toast-item {
+
+  min-width: 260px;
+
+  padding: 14px 18px;
+
+  border-radius: 12px;
+
+  background: rgba(
+    30,
+    30,
+    50,
+    0.95
+  );
+
+  color: white;
+
+  box-shadow:
+    0 4px 20px rgba(
+      0,
+      0,
+      0,
+      0.3
+    );
+
+  animation:
+    slideIn 0.3s ease,
+    fadeOut 0.5s ease 2.5s forwards;
+}
+
+@keyframes slideIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateX(100px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateX(0);
+  }
+}
+
+@keyframes fadeOut {
+
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}

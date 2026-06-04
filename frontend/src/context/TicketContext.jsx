@@ -18,9 +18,12 @@ export function TicketProvider({ children }) {
 
   // 即時事件 logs
   const [logs, setLogs] = useState([]);
+  const [toasts, setToasts] =useState([]);
 
   // 區域選擇
   const [selectedArea, setSelectedArea] = useState(1)
+
+  //
 
   return (
     <TicketContext.Provider
@@ -37,6 +40,10 @@ export function TicketProvider({ children }) {
         // logs
         logs,
         setLogs,
+
+        // message
+        toasts,
+        setToasts,
 
         //area
         selectedArea,
