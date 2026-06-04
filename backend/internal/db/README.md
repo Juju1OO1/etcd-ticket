@@ -2,6 +2,8 @@
 
 PostgreSQL 連線管理與資料庫初始化設定。
 
+---
+
 ## postgres.go
 
 ### Init(ctx, dsn)
@@ -25,7 +27,6 @@ DSN 格式：`postgres://user:password@host:port/dbname`
 
 ### orders 表欄位
 
-
 | 欄位       | 型別         | 說明                                          |
 | ---------- | ------------ | --------------------------------------------- |
 | id         | BIGSERIAL    | 自動遞增主鍵                                  |
@@ -37,9 +38,10 @@ DSN 格式：`postgres://user:password@host:port/dbname`
 | created_at | TIMESTAMPTZ  | 建立時間，DB 自動填入                         |
 
 索引：
-
-- `idx_orders_user` — 依 user_name 查詢
+- `idx_orders_user` — 依 user_name 查詢（供 `GetOrdersByUser` 使用）
 - `idx_orders_area` — 依 area 查詢
+
+UNIQUE constraint：`(user_name, area)` — 同一用戶同一區域只能有一筆訂單。
 
 ---
 
@@ -47,14 +49,15 @@ DSN 格式：`postgres://user:password@host:port/dbname`
 
 一鍵啟動 PostgreSQL 和 Redis 容器。
 
-
 | 服務     | Image       | Port                          |
 | -------- | ----------- | ----------------------------- |
 | postgres | postgres:16 | 5433（對外）→ 5432（容器內） |
 | redis    | redis:7     | 6379                          |
 
 PostgreSQL 使用 5433 對外，避免與本機預設 5432 衝突。
-schema.sql 掛載進 `/docker-entrypoint-initdb.d/`，第一次啟動自動建表。
+`schema.sql` 掛載進 `/docker-entrypoint-initdb.d/`，第一次啟動自動建表。
+
+> **注意**：Redis 已包含在 docker-compose 裡（`etcd-ticket-redis`），不要另外 `docker run redis`，否則會造成 port 衝突。
 
 ### 啟動指令
 
@@ -63,31 +66,7 @@ cd backend/internal/db
 docker compose up -d
 ```
 
-> **注意**：Redis 已包含在 docker-compose 裡（`etcd-ticket-redis`），不要另外 `docker run redis`，否則會造成 port 衝突。
-
----
-
-## 啟動步驟
-
-### 第一次啟動
-
-### 前置條件
-
-- 已安裝 Go、Docker、PostgreSQL（本機）
-
-### 步驟一：啟動 Redis
-
-```powershell
-docker run -d --name redis-test -p 6379:6379 redis:alpine
-
-```bash
-cd backend/internal/db
-docker compose up -d
-```
-
 ### 重置（完整清除後重新建立）
-
-如果之前已經跑過，要從頭重現：
 
 ```bash
 cd backend/internal/db
@@ -112,10 +91,11 @@ docker ps
 測試完整流程：`PublishOrder` 發訊息到 Redis Stream → `StartOrderWorker` 消費 → 寫入 PostgreSQL。
 
 ### 前置條件
+
 - 已安裝 Go、Docker
 - 容器已啟動（見上方啟動步驟）
 
-### 步驟一：執行測試
+### 執行測試
 
 ```bash
 cd backend
@@ -137,7 +117,7 @@ PublishOrder 成功: eve
 完成，去 DB 確認 orders table 有沒有 5 筆資料
 ```
 
-### 步驟二：確認資料寫入
+### 確認資料寫入
 
 ```bash
 docker exec -it etcd-ticket-postgres psql -U postgres -d etcd_ticket -c 'SELECT * FROM orders;'
