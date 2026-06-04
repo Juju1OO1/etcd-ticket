@@ -45,6 +45,8 @@ func NewRouter(rl RateLimitConfig) *gin.Engine {
 			tickets.POST("/checkout", CheckoutHandler)
 			tickets.GET("/status", StatusHandler)
 		}
+
+		apiGroup.GET("/orders", OrdersHandler)
 	}
 
 	return r
