@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
 import Success from "./pages/Success";
 import UserInfo from "./pages/UserInfo";
+import Orders from "./pages/Orders";
 import useWebSocket from "./hooks/useWebSocket";
 
 
@@ -129,6 +130,14 @@ function App() {
     );
   }
 
+
+  // ====================================
+  // orders
+  // ====================================
+
+  if (page === "orders") {
+    return <Orders setPage={setPage} />;
+  }
 
   // ====================================
   // home

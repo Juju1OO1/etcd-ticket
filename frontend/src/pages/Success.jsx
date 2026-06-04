@@ -25,9 +25,15 @@ export default function Success({setPage}) {
 
         <button
           className="button"
-          onClick={() =>
-            setPage("home")
-          }
+          onClick={() => setPage("orders")}
+        >
+          View My Orders
+        </button>
+
+        <button
+          className="button"
+          style={{ background: "rgba(255,255,255,0.15)" }}
+          onClick={() => setPage("home")}
         >
           Back to Home
         </button>

@@ -5,7 +5,7 @@ import "./../App.css";
 
 export default function Home({setPage}) {
   const { ticket, setTicket, status, setStatus, logs, selectedArea, setSelectedArea } = useContext(TicketContext);
-  
+
   // 上一頁 UserInfo 的資訊暫存在 local
   const userName = localStorage.getItem("userName");
   const phoneNum = localStorage.getItem("phoneNum");
@@ -162,9 +162,22 @@ export default function Home({setPage}) {
           {status}
         </div>
 
-        
-
-
+        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+          <button
+            className="button"
+            style={{ background: "rgba(255,255,255,0.15)", flex: 1 }}
+            onClick={() => setPage("userinfo")}
+          >
+            ← Go Back
+          </button>
+          <button
+            className="button"
+            style={{ background: "rgba(255,255,255,0.15)", flex: 1 }}
+            onClick={() => setPage("orders")}
+          >
+            My Orders
+          </button>
+        </div>
 
       </div>
     </div>
