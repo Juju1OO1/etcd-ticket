@@ -112,6 +112,12 @@ func sendSoldTicket(
 		AreaID:   event.AreaID,
 	}
 
+	fmt.Printf(
+		"[sendSoldTicket] user=%s area=%d\n",
+		event.UserName,
+		event.AreaID,
+	)
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return err

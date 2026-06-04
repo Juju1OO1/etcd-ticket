@@ -1,6 +1,5 @@
 import { useContext } from "react";
 import { TicketContext } from "../context/TicketContext";
-import useWebSocket from "../hooks/useWebSocket";
 import { useEffect } from "react";
 import "./../App.css";
 
@@ -12,37 +11,7 @@ export default function Home({setPage}) {
   const phoneNum = localStorage.getItem("phoneNum");
 
 
-  useWebSocket((data) => {
-    if (data.type === "ticket_available") {
-      setTicket(prev => ({
-        ...prev,
-        [data.area_id]:
-        data.available,
-      }));
-
-}
-
-    if (data.type === "ticket_sold") {
-      setStatus(data.message);
-    }
-
-    // distributed log
-    if (data.type === "ticket_sold") {
-
-      setLogs((prev) => [
-
-        `🔥 ${data.user} bought Area-${data.area} ticket`,
-
-        ...prev,
-      ]);
-    }
-
-
-
-  });
-
-
-  
+ 
 
 
   const handleBuy = async () => {
@@ -102,9 +71,17 @@ export default function Home({setPage}) {
 };
 
   const getStatusClass = () => {
-    if (status.includes("Success")) return "success";
-    if (status.includes("Sold")) return "error";
-    if (status.includes("Processing")) return "warning";
+    if (!status) return "";
+
+    if (status.includes("Success"))
+      return "success";
+
+    if (status.includes("Sold"))
+      return "error";
+
+    if (status.includes("Processing"))
+      return "warning";
+
     return "";
   };
 
