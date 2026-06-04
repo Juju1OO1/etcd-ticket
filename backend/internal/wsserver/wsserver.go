@@ -126,12 +126,19 @@ func (s *Server) handleAvailableTickets(w http.ResponseWriter, r *http.Request) 
 
 // 處理賣出日誌  當有使用者成功買到票，負責訂單的系統會 POST 到這裡，用來在前端即時跑馬燈顯示
 func (s *Server) handleSoldTickets(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var payload SoldTicketPayload
+
+	fmt.Printf(
+		"[wsserver sold] %+v\n",
+		payload,
+	)
+
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "invalid payload", http.StatusBadRequest)
 		return
@@ -148,8 +155,14 @@ func (s *Server) handleSoldTickets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) addClient(conn *websocket.Conn) {
+
 	s.mu.Lock()
 	s.clients[conn] = struct{}{}
+	fmt.Printf(
+		"Client Connected, total=%d\n",
+		len(s.clients)+1,
+	)
+
 	s.mu.Unlock()
 }
 
@@ -161,16 +174,28 @@ func (s *Server) removeClient(conn *websocket.Conn) {
 }
 
 func (s *Server) broadcast(message any) {
+
 	data, err := json.Marshal(message)
 	if err != nil {
 		return
 	}
+
+	fmt.Printf(
+		"[broadcast] %s\n",
+		string(data),
+	)
 
 	s.mu.Lock()
 	clients := make([]*websocket.Conn, 0, len(s.clients))  // 這裡的邏輯是：先把目前 clients map 裡的連線複製到一個新的 slice 裡，然後在 mutex 還沒釋放之前就把這個 slice 的內容讀取完畢。這樣可以確保在廣播訊息的過程中，其他 goroutine 還是可以繼續新增或移除 clients，而不會被鎖住。
 	for conn := range s.clients {
 		clients = append(clients, conn)
 	}
+
+	fmt.Printf(
+		"Broadcast to %d clients\n",
+		len(clients),
+	)
+
 	s.mu.Unlock()
 
 	fmt.Printf("[WS] broadcasting %s to %d client(s)\n", string(data), len(clients))

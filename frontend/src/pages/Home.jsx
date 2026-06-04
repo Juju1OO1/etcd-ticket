@@ -1,48 +1,17 @@
 import { useContext } from "react";
 import { TicketContext } from "../context/TicketContext";
-import useWebSocket from "../hooks/useWebSocket";
 import { useEffect } from "react";
 import "./../App.css";
 
 export default function Home({setPage}) {
-  const { ticket, setTicket, status, setStatus, logs, setLogs, selectedArea, setSelectedArea } = useContext(TicketContext);
+  const { ticket, setTicket, status, setStatus, logs, selectedArea, setSelectedArea } = useContext(TicketContext);
   
   // 上一頁 UserInfo 的資訊暫存在 local
   const userName = localStorage.getItem("userName");
   const phoneNum = localStorage.getItem("phoneNum");
 
 
-  useWebSocket((data) => {
-    if (data.type === "ticket_available") {
-      setTicket(prev => ({
-        ...prev,
-        [data.area_id]:
-        data.available,
-      }));
-
-}
-
-    if (data.type === "ticket_sold") {
-      setStatus(data.message);
-    }
-
-    // distributed log
-    if (data.type === "ticket_sold") {
-
-      setLogs((prev) => [
-
-        `🔥 ${data.user} bought Area-${data.area} ticket`,
-
-        ...prev,
-      ]);
-    }
-
-
-
-  });
-
-
-  
+ 
 
 
   const handleBuy = async () => {
@@ -102,9 +71,17 @@ export default function Home({setPage}) {
 };
 
   const getStatusClass = () => {
-    if (status.includes("Success")) return "success";
-    if (status.includes("Sold")) return "error";
-    if (status.includes("Processing")) return "warning";
+    if (!status) return "";
+
+    if (status.includes("Success"))
+      return "success";
+
+    if (status.includes("Sold"))
+      return "error";
+
+    if (status.includes("Processing"))
+      return "warning";
+
     return "";
   };
 
@@ -140,21 +117,6 @@ export default function Home({setPage}) {
           🎟️ World Tour
         </h1>
 
-        {/* LIVE EVENTS */}
-        <div className="logs">
-
-          <h3>Realtime Events</h3>
-
-          {logs.map((log, idx) => (
-
-            <div key={idx} className="log-item">
-              {log}
-            </div>
-
-          ))}
-
-        </div>
-
         <div className="area-selector">
 
           <h3>Select Area</h3>
@@ -186,19 +148,20 @@ export default function Home({setPage}) {
             : ticket[selectedArea]}
         </div>
         
-        <button
-          className="button"
-          disabled={ticket[selectedArea] === 0}
-          onClick={handleBuy}
+        {ticket[selectedArea] > 0 && (
+          <button
+            className="button"
+            onClick={handleBuy}
           >
-            {ticket[selectedArea] === 0 ? "Sold Out" : "Buy Ticket"}
-        </button>
+            Buy Ticket
+          </button>
+
+        )}
 
         <div className={`status ${getStatusClass()}`}>
           {status}
         </div>
 
-        {/* realtime logs */}
         
 
 
