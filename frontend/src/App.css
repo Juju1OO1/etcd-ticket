@@ -365,3 +365,71 @@ body {
     opacity: 0;
   }
 }
+
+.orders-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #1e1e3f;
+  padding: 40px 16px;
+}
+
+.orders-card {
+  width: 520px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 40px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.order-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+}
+
+.order-value {
+  font-weight: 500;
+}
+
+.order-id {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  word-break: break-all;
+  text-align: right;
+  max-width: 60%;
+}
+
+.order-status--success {
+  color: #00ff99;
+}
+
+.order-status--cancelled {
+  color: #ff4757;
+}

@@ -36,22 +36,25 @@ export default function Checkout({
 
   // 倒計時
   useEffect(() => {
+    let redirectTimeout;
 
-  const timer = setInterval(() => {
-    setTimeLeft((prev) => {
-      if (prev <= 1) {
-        clearInterval(timer);
-        setStatus(
-          "⏰ Reservation expired"
-        );
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
-  return () => clearInterval(timer);
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setStatus("⏰ Reservation expired, redirecting...");
+          redirectTimeout = setTimeout(() => setPage("home"), 2000);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
 
-}, []);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(redirectTimeout);
+    };
+  }, []);
 
   const minutes =
     Math.floor(timeLeft / 60);
