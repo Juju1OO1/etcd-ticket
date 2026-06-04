@@ -129,6 +129,7 @@ func sendSoldTicket(
 
 	req.Header.Set("Content-Type", "application/json")
 
+	fmt.Printf("[BRIDGE] POST sold user=%s area=%d -> wsserver\n", event.UserName, event.AreaID)
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err

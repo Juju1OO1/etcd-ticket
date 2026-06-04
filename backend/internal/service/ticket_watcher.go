@@ -61,14 +61,17 @@ func WatchAvailableTickets(ctx context.Context, areaID int) (<-chan int64, error
 	client := etcd.New()
 
 	channel := make(chan int64)
+	
+	// 派生新 goroutine 來監聽 etcd 的變化事件，並把剩餘票數送到 channel 裡，這樣就不會阻塞主流程。
 	go func() {
 		defer close(channel)
 
 		sendAvailable := func() bool {
-			available, err := GetAvailableTickets(ctx, areaID)
+			available, err := GetAvailableTickets(ctx, areaID) // 這個方法會透過 RPC 請求去 etcd 讀取該區域目前的「總上限」、「被佔用數」、「付款中數」
 			if err != nil {
 				return false
 			}
+			fmt.Printf("[WATCHER] area%d available -> %d\n", areaID, available)
 			select {
 			case channel <- available:
 				return true
@@ -86,6 +89,7 @@ func WatchAvailableTickets(ctx context.Context, areaID int) (<-chan int64, error
 		watchHolder := client.Cli.Watch(ctx, area+"/holder/", clientv3.WithPrefix())
 		watchPaying := client.Cli.Watch(ctx, area+"/paying/", clientv3.WithPrefix())
 
+		// 這是一個阻塞型的事件循環（Event Loop）。當 etcd 沒有任何資料變動、且外部沒有關機時，這個背景工人會卡在這一行進入不耗 CPU 算力的休眠狀態。
 		for {
 			select {
 			case resp, ok := <-watchCurrentLimit:
@@ -166,6 +170,7 @@ func WatchSoldTickets(ctx context.Context, areaID int) (<-chan SoldTicketEvent, 
 					key := string(event.Kv.Key)
 					userName := strings.TrimPrefix(key, soldPrefix)
 					phone := string(event.Kv.Value)
+					fmt.Printf("[WATCHER] area%d new sale: %s / %s\n", areaID, userName, phone)
 
 					select {
 					case channel <- SoldTicketEvent{

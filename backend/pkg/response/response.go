@@ -5,7 +5,7 @@ import "github.com/gin-gonic/gin"
 type Body struct {
 	Code int         `json:"code"`
 	Msg  string      `json:"msg"`
-	Data interface{} `json:"data,omitempty"`
+	Data interface{} `json:"data,omitempty"`  //interface{} 等同 any（Go 1.18+）— 萬用型別，但取出來時要 type assertion
 }
 
 func OK(c *gin.Context, data interface{}) {

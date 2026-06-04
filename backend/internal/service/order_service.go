@@ -14,34 +14,41 @@ import (
 // PublishOrder 供成員4的 handler 在 Checkout() 成功後呼叫
 func PublishOrder(ctx context.Context, td TicketData) error {
 	orderID := uuid.NewString()
-	return mq.Publish(ctx, orderID, td.UserName, td.PhoneNum, td.Area, "success")
+	if err := mq.Publish(ctx, orderID, td.UserName, td.PhoneNum, td.Area, "success"); err != nil {
+		return err
+	}
+	fmt.Printf("[ORDER] %s order published to Redis Stream  orderID=%s\n", td.UserName, orderID)
+	return nil
 }
 
 // StartOrderWorker 在 main.go 啟動時以 goroutine 執行，持續消費 Redis Stream
 func StartOrderWorker(ctx context.Context) {
 	go func() {
-		fmt.Println("[order worker] 啟動，等待訂單訊息...")
+		fmt.Println("[WORKER] started, waiting for messages...")
 		for {
 			msgs, err := mq.Consume(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
-					fmt.Println("[order worker] 收到關閉信號，停止")
+					fmt.Println("[WORKER] received shutdown signal, stopping")
 					return
 				}
-				fmt.Printf("[order worker] consume 失敗: %v\n", err)
+				fmt.Printf("[WORKER] consume failed: %v\n", err)
 				continue
 			}
 
 			for _, msg := range msgs {
+				fmt.Printf("[WORKER] received msgID=%s\n", msg.ID)
 				if err := processMessage(ctx, msg.ID, msg.Values); err != nil {
-					fmt.Printf("[order worker] 處理訊息失敗 msgID=%s err=%v\n", msg.ID, err)
+					fmt.Printf("[WORKER] ✗ process failed msgID=%s err=%v\n", msg.ID, err)
 					// 不 Ack，訊息留在 pending list，下次重新消費
 					continue
 				}
 				// 寫入成功才 Ack
 				if err := mq.Ack(ctx, msg.ID); err != nil {
-					fmt.Printf("[order worker] ack 失敗 msgID=%s err=%v\n", msg.ID, err)
+					fmt.Printf("[WORKER] ✗ ack failed msgID=%s err=%v\n", msg.ID, err)
+					continue
 				}
+				fmt.Printf("[WORKER] ✓ acknowledged msgID=%s\n", msg.ID)
 			}
 		}
 	}()
@@ -61,5 +68,9 @@ func processMessage(ctx context.Context, msgID string, values map[string]interfa
 		Status:   fmt.Sprintf("%v", values["status"]),
 	}
 
-	return repository.InsertOrder(ctx, order)
+	if err := repository.InsertOrder(ctx, order); err != nil {
+		return err
+	}
+	fmt.Printf("[WORKER] ✓ inserted into PostgreSQL  user=%s area=%d orderID=%s\n", order.UserName, order.Area, order.OrderID)
+	return nil
 }

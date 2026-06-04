@@ -112,7 +112,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, bool, error) {
 	ctx, cancel := c.timeoutCtx(ctx)
 	defer cancel()
 
-	resp, err := c.Cli.Get(ctx, key)
+	resp, err := c.Cli.Get(ctx, key) // 呼叫 etcd 官方客戶端真正用來讀取資料的方法。
 	if err != nil {
 		return "", false, err
 	}
