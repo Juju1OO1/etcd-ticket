@@ -12,11 +12,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-
 type Server struct {
-	mu       sync.Mutex // 這裡的 mutex 是用來保護 clients 這個 map 的併發安全，因為多個 goroutine 可能同時訪問和修改 clients。
-	clients  map[*websocket.Conn]struct{}  // 用來儲存「當前所有在線上的前端連線」的集合
-	upgrader websocket.Upgrader   // Gorilla WebSocket 套件的核心元件。負責把標準的 HTTP 請求「升級」成持久的 WebSocket 長連線
+	mu       sync.Mutex                   // 這裡的 mutex 是用來保護 clients 這個 map 的併發安全，因為多個 goroutine 可能同時訪問和修改 clients。
+	clients  map[*websocket.Conn]struct{} // 用來儲存「當前所有在線上的前端連線」的集合
+	upgrader websocket.Upgrader           // Gorilla WebSocket 套件的核心元件。負責把標準的 HTTP 請求「升級」成持久的 WebSocket 長連線
 }
 
 func NewServer() *Server {
@@ -42,16 +41,18 @@ type SoldTicketPayload struct {
 }
 
 type TicketUpdateEvent struct {
-	Type      string `json:"type"`
-	AreaID    int    `json:"area_id"`
-	Available int64  `json:"available"`
+	Type            string `json:"type"`
+	AreaID          int    `json:"area_id"`
+	Available       int64  `json:"available"`
+	ServerTimestamp int64  `json:"server_timestamp"`
 }
 
 type SoldLogEvent struct {
-	Type     string `json:"type"`
-	UserName string `json:"user"`
-	AreaID   int    `json:"area"`
-	Phone    string `json:"phone"`
+	Type            string `json:"type"`
+	UserName        string `json:"user"`
+	AreaID          int    `json:"area"`
+	Phone           string `json:"phone"`
+	ServerTimestamp int64  `json:"server_timestamp"`
 }
 
 // 開兩個 POST endpoint 等 watcher/available_ticket_ws.go 送事件來：
@@ -86,7 +87,7 @@ func (s *Server) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.addClient(conn)      // 2. 將連線加入全域名單，以便後續廣播訊息時能夠找到這個連線
+	s.addClient(conn) // 2. 將連線加入全域名單，以便後續廣播訊息時能夠找到這個連線
 	fmt.Printf("[WS] client connected from %s\n", r.RemoteAddr)
 	defer func() {
 		s.removeClient(conn)
@@ -116,9 +117,10 @@ func (s *Server) handleAvailableTickets(w http.ResponseWriter, r *http.Request) 
 	}
 
 	s.broadcast(TicketUpdateEvent{
-		Type:      "ticket_available",
-		AreaID:    payload.AreaID,
-		Available: payload.Available,
+		Type:            "ticket_available",
+		AreaID:          payload.AreaID,
+		Available:       payload.Available,
+		ServerTimestamp: time.Now().UnixMilli(),
 	})
 
 	w.WriteHeader(http.StatusNoContent)
@@ -145,10 +147,11 @@ func (s *Server) handleSoldTickets(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.broadcast(SoldLogEvent{
-		Type:     "ticket_sold",
-		UserName: payload.UserName,
-		AreaID:   payload.AreaID,
-		Phone:    payload.Phone,
+		Type:            "ticket_sold",
+		UserName:        payload.UserName,
+		AreaID:          payload.AreaID,
+		Phone:           payload.Phone,
+		ServerTimestamp: time.Now().UnixMilli(),
 	})
 
 	w.WriteHeader(http.StatusNoContent)
@@ -186,7 +189,7 @@ func (s *Server) broadcast(message any) {
 	)
 
 	s.mu.Lock()
-	clients := make([]*websocket.Conn, 0, len(s.clients))  // 這裡的邏輯是：先把目前 clients map 裡的連線複製到一個新的 slice 裡，然後在 mutex 還沒釋放之前就把這個 slice 的內容讀取完畢。這樣可以確保在廣播訊息的過程中，其他 goroutine 還是可以繼續新增或移除 clients，而不會被鎖住。
+	clients := make([]*websocket.Conn, 0, len(s.clients)) // 這裡的邏輯是：先把目前 clients map 裡的連線複製到一個新的 slice 裡，然後在 mutex 還沒釋放之前就把這個 slice 的內容讀取完畢。這樣可以確保在廣播訊息的過程中，其他 goroutine 還是可以繼續新增或移除 clients，而不會被鎖住。
 	for conn := range s.clients {
 		clients = append(clients, conn)
 	}

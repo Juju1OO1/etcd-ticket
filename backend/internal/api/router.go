@@ -37,7 +37,7 @@ func NewRouter(rl RateLimitConfig) *gin.Engine {
 	// 探活不掛 rate limit，避免 k8s / 監控誤判
 	r.GET("/healthz", HealthzHandler(limiter))
 
-	apiGroup := r.Group("/api", RateLimitMiddleware(limiter))
+	apiGroup := r.Group("/api") //, RateLimitMiddleware(limiter))
 	{
 		tickets := apiGroup.Group("/tickets")
 		{
