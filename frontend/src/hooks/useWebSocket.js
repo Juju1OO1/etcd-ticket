@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 export default function useWebSocket(onMessage) {
+  
   useEffect(() => {
     const ws = new WebSocket("ws://localhost:8888/ws");
 

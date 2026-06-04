@@ -1,16 +1,50 @@
-import { useState } from "react";
-
+import { useState, useContext } from "react";
+import { TicketContext } from "./context/TicketContext";
 import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
 import Success from "./pages/Success";
 import UserInfo from "./pages/UserInfo";
+import useWebSocket from "./hooks/useWebSocket";
+
 
 import "./App.css";
 
 function App() {
 
-  const [page, setPage] =
-    useState("landing");
+  const [page, setPage] = useState("landing");
+  const {  setTicket, setStatus, setLogs } = useContext(TicketContext);
+  
+
+     useWebSocket((data) => {
+    console.log("WS MESSAGE:", data);
+
+    if (data.type === "ticket_available") {
+      setTicket(prev => ({
+        ...prev,
+        [data.area_id]:
+        data.available,
+      }));
+
+}
+
+
+    // distributed log
+    if (data.type === "ticket_sold") {
+
+      setLogs((prev) => [
+
+        `🔥 ${data.user} bought Area ${data.area} ticket`,
+
+        ...prev,
+      ]);
+    }
+
+
+
+  });
+
+
+  
 
   // ====================================
   // landing
@@ -72,9 +106,13 @@ function App() {
   // home
   // ====================================
 
-  return (
-    <Home setPage={setPage} />
-  );
+  if (page === "home") {
+  return <Home setPage={setPage} />;
+}
+
+// 最終 fallback
+return <Home setPage={setPage} />;
+
 }
 
 export default App;

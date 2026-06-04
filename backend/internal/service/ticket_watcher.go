@@ -137,6 +137,12 @@ type SoldTicketEvent struct {
 
 func WatchSoldTickets(ctx context.Context, areaID int) (<-chan SoldTicketEvent, error) {
 
+	// 除錯
+	fmt.Printf(
+		"WatchSoldTickets Start area=%d\n",
+		areaID)
+	// 除錯
+
 	area := "area" + strconv.Itoa(areaID)
 	client := etcd.New()
 
@@ -159,6 +165,12 @@ func WatchSoldTickets(ctx context.Context, areaID int) (<-chan SoldTicketEvent, 
 				}
 
 				for _, event := range resp.Events {
+					fmt.Printf(
+						"Sold Event Receive key=%s value=%s\n",
+						string(event.Kv.Key),
+						string(event.Kv.Value),
+					)
+
 					if event.Type != clientv3.EventTypePut {
 						continue
 					}

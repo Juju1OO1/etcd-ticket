@@ -115,12 +115,19 @@ func (s *Server) handleAvailableTickets(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *Server) handleSoldTickets(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var payload SoldTicketPayload
+
+	fmt.Printf(
+		"[wsserver sold] %+v\n",
+		payload,
+	)
+
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		http.Error(w, "invalid payload", http.StatusBadRequest)
 		return
@@ -137,8 +144,14 @@ func (s *Server) handleSoldTickets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) addClient(conn *websocket.Conn) {
+
 	s.mu.Lock()
 	s.clients[conn] = struct{}{}
+	fmt.Printf(
+		"Client Connected, total=%d\n",
+		len(s.clients)+1,
+	)
+
 	s.mu.Unlock()
 }
 
@@ -150,16 +163,28 @@ func (s *Server) removeClient(conn *websocket.Conn) {
 }
 
 func (s *Server) broadcast(message any) {
+
 	data, err := json.Marshal(message)
 	if err != nil {
 		return
 	}
+
+	fmt.Printf(
+		"[broadcast] %s\n",
+		string(data),
+	)
 
 	s.mu.Lock()
 	clients := make([]*websocket.Conn, 0, len(s.clients))
 	for conn := range s.clients {
 		clients = append(clients, conn)
 	}
+
+	fmt.Printf(
+		"Broadcast to %d clients\n",
+		len(clients),
+	)
+
 	s.mu.Unlock()
 
 	for _, conn := range clients {
