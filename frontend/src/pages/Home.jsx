@@ -1,22 +1,33 @@
 import { useContext } from "react";
 import { TicketContext } from "../context/TicketContext";
 import useWebSocket from "../hooks/useWebSocket";
+import { useEffect } from "react";
 import "./../App.css";
 
 export default function Home({setPage}) {
-  const { ticket, setTicket, status, setStatus, logs, setLogs } = useContext(TicketContext);
+  const { ticket, setTicket, status, setStatus, logs, setLogs, selectedArea, setSelectedArea } = useContext(TicketContext);
+  
+  // 上一頁 UserInfo 的資訊暫存在 local
+  const userName = localStorage.getItem("userName");
+  const phoneNum = localStorage.getItem("phoneNum");
+
 
   useWebSocket((data) => {
-    if (data.type === "ticket_update") {
-      setTicket(data.count);
-    }
+    if (data.type === "ticket_available") {
+      setTicket(prev => ({
+        ...prev,
+        [data.area_id]:
+        data.available,
+      }));
 
-    if (data.type === "buy_result") {
+}
+
+    if (data.type === "ticket_sold") {
       setStatus(data.message);
     }
 
     // distributed log
-    if (data.type === "sold_log") {
+    if (data.type === "ticket_sold") {
 
       setLogs((prev) => [
 
@@ -29,6 +40,10 @@ export default function Home({setPage}) {
 
 
   });
+
+
+  
+
 
   const handleBuy = async () => {
 
@@ -48,11 +63,11 @@ export default function Home({setPage}) {
 
           body: JSON.stringify({
 
-            user_name: "john",
+            user_name: userName,
 
-            phone_num: "0912345678",
+            phone_num: phoneNum,
 
-            area: 1,
+            area: selectedArea,
 
           }),
         }
@@ -63,14 +78,19 @@ export default function Home({setPage}) {
     console.log(data);
 
     setStatus(
-      data.message || "Reserved"
+      "Ready to buy 🎯"
     );
 
     // 搶票成功
     if (data.data?.reserved) {
 
+      localStorage.setItem(
+        "selectedArea",
+        selectedArea
+      );
+
       // 進付款頁
-      setPage("userinfo");
+      setPage("checkout");
     }
 
   } catch {
@@ -88,11 +108,36 @@ export default function Home({setPage}) {
     return "";
   };
 
+  useEffect(() => {
+
+  fetch(
+    "http://localhost:8080/api/tickets/status"
+  )
+    .then(res => res.json())
+    .then(res => {
+
+      const areas =
+        res.data?.areas || [];
+
+      const map = {};
+
+      areas.forEach(area => {
+        map[area.area_id] =
+          area.available;
+      });
+
+      setTicket(map);
+
+    });
+
+}, []);
+
+
   return (
     <div className="container">
       <div className="card">
         <h1 className="title">
-          🎟️ Ticket System
+          🎟️ World Tour
         </h1>
 
         {/* LIVE EVENTS */}
@@ -110,17 +155,43 @@ export default function Home({setPage}) {
 
         </div>
 
+        <div className="area-selector">
+
+          <h3>Select Area</h3>
+
+          <select
+            className="area-select"
+            value={selectedArea}
+            onChange={(e) =>
+              setSelectedArea(Number(e.target.value))
+            }
+          >
+            <option value={1}>
+              Area 1
+            </option>
+
+            <option value={2}>
+              Area 2
+            </option>
+
+          </select>
+
+        </div>
+ 
+
 
         <div className="ticket">
-          {ticket === 0 ? "SOLD OUT" : ticket}
+          {ticket[selectedArea] === 0
+            ? "SOLD OUT"
+            : ticket[selectedArea]}
         </div>
         
         <button
           className="button"
-          disabled={ticket === 0}
+          disabled={ticket[selectedArea] === 0}
           onClick={handleBuy}
           >
-            {ticket === 0 ? "Sold Out" : "Buy Ticket"}
+            {ticket[selectedArea] === 0 ? "Sold Out" : "Buy Ticket"}
         </button>
 
         <div className={`status ${getStatusClass()}`}>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import "./../App.css";
 
@@ -11,6 +11,49 @@ export default function Checkout({
 
   const [status, setStatus] =
     useState("");
+
+  const [timeLeft, setTimeLeft] =
+  useState(300);
+
+  // 把 name 跟 phone 從 localstorage 拿出來
+  const userName =
+  localStorage.getItem("userName");
+
+  const phoneNum =
+  localStorage.getItem("phoneNum");
+
+  const area =
+  localStorage.getItem("selectedArea");
+
+  // 倒計時
+  useEffect(() => {
+
+  const timer = setInterval(() => {
+    setTimeLeft((prev) => {
+      if (prev <= 1) {
+        clearInterval(timer);
+        setStatus(
+          "⏰ Reservation expired"
+        );
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+  return () => clearInterval(timer);
+
+}, []);
+
+  const minutes =
+    Math.floor(timeLeft / 60);
+
+  const seconds =
+    timeLeft % 60;
+
+  const countdown =
+    `${minutes}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
 
   // ====================================
   // pay
@@ -38,11 +81,11 @@ export default function Checkout({
 
           body: JSON.stringify({
 
-            user_name: "john",
+            user_name: userName,
 
-            phone_num: "0912345678",
+            phone_num: phoneNum,
 
-            area: 1,
+            area: Number(area),
 
           }),
         }
@@ -99,7 +142,7 @@ export default function Checkout({
           <br />
 
           Please complete payment
-          within 5 minutes.
+          within <strong>{countdown}</strong>.
 
         </p>
 

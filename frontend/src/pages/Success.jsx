@@ -9,7 +9,7 @@ export default function Success({setPage}) {
       <div className="success-card">
 
         <h1>
-          ✅ Payment Successful
+          🎉 Thank You 🎉
         </h1>
 
         <p>
@@ -26,7 +26,7 @@ export default function Success({setPage}) {
         <button
           className="button"
           onClick={() =>
-            setPage("landing")
+            setPage("home")
           }
         >
           Back to Home

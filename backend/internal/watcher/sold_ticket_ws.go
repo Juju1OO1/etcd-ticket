@@ -98,6 +98,7 @@ func StartSoldTicketHTTPClient(
 }
 
 func sendSoldTicket(
+
 	ctx context.Context,
 	httpClient *http.Client,
 	endpoint string,

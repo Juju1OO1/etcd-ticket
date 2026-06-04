@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,7 +16,16 @@ type RateLimitConfig struct {
 //   - middleware：Logger / Recovery / CORS / RateLimit
 //   - GET /healthz（探活，不掛 rate limit）
 //   - /api/tickets/{reserve,checkout,status}（成員 4 填 body）
+
 func NewRouter(rl RateLimitConfig) *gin.Engine {
+	// 除錯
+	fmt.Printf(
+		"RateLimit Config => RPS=%v Burst=%v\n",
+		rl.RPS,
+		rl.Burst,
+	)
+	// 除錯
+
 	r := gin.New()
 	// 沒有真正的反向代理，明確拒絕信任，避免 X-Forwarded-For 被偽造繞過 rate limit。
 	_ = r.SetTrustedProxies(nil)

@@ -39,6 +39,11 @@ backend/
 │   │   ├── ticket_watcher.go    # 監聽   
 │   │   └── order_service.go     # 訂單發布與消費（PublishOrder、StartOrderWorker）丟給 Redis
 │   │
+│   │
+│   ├── wsserver/
+│   │   └── wsserver.go
+│   │
+│   │
 │   ├── watcher/                 # watch 機制
 │   │   ├── available_ticket_ws.go
 │   │   └── sold_ticket_ws.go
@@ -62,7 +67,7 @@ backend/
 │   │
 │   ├── lock/                    # 分散式鎖
 │   │   └── mutex.go
-
+│   │
 │   │
 │   └── model/                   # 資料結構
 │       └── ticket.go            # Order struct（對應 orders 表欄位）
@@ -185,7 +190,7 @@ docker/
 
 ## 環境需求
 
-1. NodeJS``` 20.20.2```
+1. NodeJS ```20.20.2```
 2. Go ```1.26.2```
 
 ## 如何啟動
@@ -220,6 +225,9 @@ cd backend
 
 // 啟動
 go run cmd/server/main.go &
+
+// 砍掉重練
+pkill -f "go run cmd/server/main.go"
 ```
 
 4. 啟動前端
@@ -227,6 +235,9 @@ go run cmd/server/main.go &
 ```
 // 目錄
 cd frontend
+
+// 切換 node version
+nvm use 20
 
 // 啟動
 npm create vite@latest .

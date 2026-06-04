@@ -5,7 +5,12 @@ export const TicketContext = createContext();
 export function TicketProvider({ children }) {
 
   // 剩餘票數
-  const [ticket, setTicket] = useState(10);
+  const [ticket, setTicket] = 
+  useState({
+    1: 0, 
+    2: 0, 
+  });
+
 
   // 狀態文字
   const [status, setStatus] =
@@ -13,6 +18,9 @@ export function TicketProvider({ children }) {
 
   // 即時事件 logs
   const [logs, setLogs] = useState([]);
+
+  // 區域選擇
+  const [selectedArea, setSelectedArea] = useState(1)
 
   return (
     <TicketContext.Provider
@@ -29,6 +37,10 @@ export function TicketProvider({ children }) {
         // logs
         logs,
         setLogs,
+
+        //area
+        selectedArea,
+        setSelectedArea
       }}
     >
       {children}

@@ -12,15 +12,31 @@ export default function UserInfo({
   const [phoneNum, setPhoneNum] =
     useState("");
 
-  const [area, setArea] =
-    useState(1);
 
   const handleNext = () => {
+    if (!userName.trim()) {
+        alert("Please enter your User name");
+        return;
+      }
 
-    // 之後可以存進 context
+      if (!phoneNum.trim()) {
+        alert("Please enter your Phone number");
+        return;
+      }
 
-    setPage("checkout");
-  };
+      localStorage.setItem(
+        "userName",
+        userName
+      );
+
+      localStorage.setItem(
+        "phoneNum",
+        phoneNum
+      );
+
+  setPage("home");
+};
+ 
 
   return (
 
@@ -29,7 +45,7 @@ export default function UserInfo({
       <div className="checkout-card">
 
         <h1>
-          🎫 Ticket Information
+          🎫 Your Information
         </h1>
 
         <input
@@ -56,31 +72,13 @@ export default function UserInfo({
           }
         />
 
-        <select
-          className="input"
-
-          value={area}
-
-          onChange={(e) =>
-            setArea(Number(e.target.value))
-          }
-        >
-
-          <option value={1}>
-            Area 1
-          </option>
-
-          <option value={2}>
-            Area 2
-          </option>
-
-        </select>
+        
 
         <button
           className="button"
           onClick={handleNext}
         >
-          Continue to Payment
+          Register
         </button>
 
       </div>

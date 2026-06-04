@@ -136,6 +136,7 @@ type SoldTicketEvent struct {
 }
 
 func WatchSoldTickets(ctx context.Context, areaID int) (<-chan SoldTicketEvent, error) {
+
 	area := "area" + strconv.Itoa(areaID)
 	client := etcd.New()
 
