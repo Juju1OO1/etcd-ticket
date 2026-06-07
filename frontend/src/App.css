@@ -1,8 +1,32 @@
 body {
+
   margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: linear-gradient(135deg, #1e1e2f, #2c2c54);
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background: #1e1e3f;
+
   color: white;
+}
+
+.landing {
+
+  min-height: 100vh;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 24px;
+
+  background: #1e1e3f;
 }
 
 .container {
@@ -69,4 +93,343 @@ body {
 
 .warning {
   color: #ffa502;
+}
+
+.checkout-container {
+
+  min-height: 100vh;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  background: #1e1e3f;
+}
+
+.checkout-card {
+
+  width: 400px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  padding: 40px;
+
+  border-radius: 20px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 20px;
+
+  color: white;
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.3);
+}
+
+.input {
+
+  padding: 12px;
+
+  border-radius: 8px;
+
+  border: none;
+
+  font-size: 1rem;
+}
+
+
+.success-container {
+
+  min-height: 100vh;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  background: #1e1e3f;
+}
+
+.success-card {
+
+  width: 450px;
+
+  background:
+    rgba(255,255,255,0.08);
+
+  padding: 50px;
+
+  border-radius: 24px;
+
+  text-align: center;
+
+  color: white;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 24px;
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.3);
+}
+
+.success-ticket {
+
+  font-size: 1.4rem;
+
+  padding: 20px;
+
+  border-radius: 12px;
+
+  background:
+    rgba(0,255,150,0.15);
+
+  color: #00ff99;
+}
+
+
+.live-feed {
+
+  width: 100%;
+
+  margin-top: 20px;
+
+  margin-bottom: 30px;
+
+  background:
+    rgba(255,255,255,0.05);
+
+  border-radius: 14px;
+
+  padding: 16px;
+
+  overflow: hidden;
+}
+
+.live-title {
+
+  font-size: 0.9rem;
+
+  font-weight: bold;
+
+  color: #ffcc00;
+
+  margin-bottom: 12px;
+
+  letter-spacing: 1px;
+}
+
+.live-list {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+
+  max-height: 120px;
+
+  overflow-y: auto;
+}
+
+.live-item {
+
+  color: #00ff99;
+
+  font-size: 0.95rem;
+
+  animation:
+    fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(-8px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+}
+
+.area-selector {
+  margin: 20px 0;
+}
+
+.area-select {
+
+  width: 100%;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  border: 1px solid #ccc;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  background: white;
+}
+
+
+.toast-wrapper {
+
+  position: fixed;
+
+  bottom: 20px;
+  right: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+
+  z-index: 9999;
+}
+
+.toast-item {
+
+  min-width: 260px;
+
+  padding: 14px 18px;
+
+  border-radius: 12px;
+
+  background: rgba(
+    30,
+    30,
+    50,
+    0.95
+  );
+
+  color: white;
+
+  box-shadow:
+    0 4px 20px rgba(
+      0,
+      0,
+      0,
+      0.3
+    );
+
+  animation:
+    slideIn 0.3s ease,
+    fadeOut 0.5s ease 2.5s forwards;
+}
+
+@keyframes slideIn {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateX(100px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateX(0);
+  }
+}
+
+@keyframes fadeOut {
+
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+.orders-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #1e1e3f;
+  padding: 40px 16px;
+}
+
+.orders-card {
+  width: 520px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 40px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  color: white;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.order-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+}
+
+.order-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.85rem;
+}
+
+.order-value {
+  font-weight: 500;
+}
+
+.order-id {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  word-break: break-all;
+  text-align: right;
+  max-width: 60%;
+}
+
+.order-status--success {
+  color: #00ff99;
+}
+
+.order-status--cancelled {
+  color: #ff4757;
 }

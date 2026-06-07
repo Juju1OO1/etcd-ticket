@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -77,6 +78,16 @@ func (l *IPRateLimiter) cleanupLoop() {
 func RateLimitMiddleware(l *IPRateLimiter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
+		allowed := l.Allow(ip)
+
+		// 	log
+		fmt.Printf(
+			"IP=%s Allow=%v\n",
+			ip,
+			allowed,
+		)
+		// 	log
+
 		if !l.Allow(ip) {
 			l.blocked.Add(1)
 			c.Header("Retry-After", "1")

@@ -11,3 +11,7 @@ CREATE TABLE IF NOT EXISTS orders (
 
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_name);
 CREATE INDEX IF NOT EXISTS idx_orders_area ON orders (area);
+
+ALTER TABLE orders
+ADD CONSTRAINT orders_user_name_area_key
+UNIQUE (user_name, area);

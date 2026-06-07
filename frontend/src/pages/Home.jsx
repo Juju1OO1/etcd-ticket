@@ -1,52 +1,184 @@
 import { useContext } from "react";
 import { TicketContext } from "../context/TicketContext";
-import useWebSocket from "../hooks/useWebSocket";
+import { useEffect } from "react";
 import "./../App.css";
 
-export default function Home() {
-  const { ticket, setTicket, status, setStatus } = useContext(TicketContext);
+export default function Home({setPage}) {
+  const { ticket, setTicket, status, setStatus, logs, selectedArea, setSelectedArea } = useContext(TicketContext);
 
-  useWebSocket((data) => {
-    if (data.type === "ticket_update") {
-      setTicket(data.count);
-    }
+  // 上一頁 UserInfo 的資訊暫存在 local
+  const userName = localStorage.getItem("userName");
+  const phoneNum = localStorage.getItem("phoneNum");
 
-    if (data.type === "buy_result") {
-      setStatus(data.message);
-    }
-  });
+
+ 
+
 
   const handleBuy = async () => {
+
     setStatus("Processing...");
-  };
+
+    try {
+
+      const res = await fetch(
+        "http://localhost:8080/api/tickets/reserve",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+
+            user_name: userName,
+
+            phone_num: phoneNum,
+
+            area: selectedArea,
+
+          }),
+        }
+      );
+
+    const data = await res.json();
+
+    console.log(data);
+
+    setStatus(
+      "Ready to buy 🎯"
+    );
+
+    // 搶票成功
+    if (data.data?.reserved) {
+
+      localStorage.setItem(
+        "selectedArea",
+        selectedArea
+      );
+
+      // 進付款頁
+      setPage("checkout");
+    }
+
+  } catch {
+
+    setStatus(
+      "❌ Backend Error"
+    );
+  }
+};
 
   const getStatusClass = () => {
-    if (status.includes("Success")) return "success";
-    if (status.includes("Sold")) return "error";
-    if (status.includes("Processing")) return "warning";
+    if (!status) return "";
+
+    if (status.includes("Success"))
+      return "success";
+
+    if (status.includes("Sold"))
+      return "error";
+
+    if (status.includes("Processing"))
+      return "warning";
+
     return "";
   };
+
+  useEffect(() => {
+
+  fetch(
+    "http://localhost:8080/api/tickets/status"
+  )
+    .then(res => res.json())
+    .then(res => {
+
+      const areas =
+        res.data?.areas || [];
+
+      const map = {};
+
+      areas.forEach(area => {
+        map[area.area_id] =
+          area.available;
+      });
+
+      setTicket(map);
+
+    });
+
+}, []);
+
 
   return (
     <div className="container">
       <div className="card">
-        <h1 className="title">🎟️ Ticket System</h1>
+        <h1 className="title">
+          🎟️ World Tour
+        </h1>
+
+        <div className="area-selector">
+
+          <h3>Select Area</h3>
+
+          <select
+            className="area-select"
+            value={selectedArea}
+            onChange={(e) =>
+              setSelectedArea(Number(e.target.value))
+            }
+          >
+            <option value={1}>
+              Area 1
+            </option>
+
+            <option value={2}>
+              Area 2
+            </option>
+
+          </select>
+
+        </div>
+ 
+
 
         <div className="ticket">
-          {ticket === 0 ? "SOLD OUT" : ticket}
+          {ticket[selectedArea] === 0
+            ? "SOLD OUT"
+            : ticket[selectedArea]}
         </div>
         
-        <button
-          className="button"
-          disabled={ticket === 0}
-          onClick={handleBuy}
+        {ticket[selectedArea] > 0 && (
+          <button
+            className="button"
+            onClick={handleBuy}
           >
-            {ticket === 0 ? "Sold Out" : "Buy Ticket"}
-        </button>
+            Buy Ticket
+          </button>
+
+        )}
 
         <div className={`status ${getStatusClass()}`}>
           {status}
         </div>
+
+        <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+          <button
+            className="button"
+            style={{ background: "rgba(255,255,255,0.15)", flex: 1 }}
+            onClick={() => setPage("userinfo")}
+          >
+            ← Go Back
+          </button>
+          <button
+            className="button"
+            style={{ background: "rgba(255,255,255,0.15)", flex: 1 }}
+            onClick={() => setPage("orders")}
+          >
+            My Orders
+          </button>
+        </div>
+
       </div>
     </div>
   );

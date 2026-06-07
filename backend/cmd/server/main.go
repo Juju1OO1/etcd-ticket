@@ -8,6 +8,7 @@ import (
 	"etcd-ticket/internal/mq"
 	"etcd-ticket/internal/service"
 	"etcd-ticket/internal/watcher"
+	"etcd-ticket/internal/wsserver"
 	"fmt"
 	"os"
 
@@ -16,18 +17,21 @@ import (
 
 type AppConfig struct {
 	Server struct {
-		Port int `yaml:"port"`
-	} `yaml:"server"`
+		Port int `yaml:"port" json:"port"`
+	} `yaml:"server" json:"server"`
+
 	Database struct {
-		DSN string `yaml:"dsn"`
-	} `yaml:"database"`
+		DSN string `yaml:"dsn" json:"dsn"`
+	} `yaml:"database" json:"database"`
+
 	Redis struct {
-		Addr string `yaml:"addr"`
-	} `yaml:"redis"`
+		Addr string `yaml:"addr" json:"addr"`
+	} `yaml:"redis" json:"redis"`
+
 	RateLimit struct {
-		RPS   float64 `yaml:"rps"`
-		Burst int     `yaml:"burst"`
-	} `yaml:"rate_limit"`
+		RPS   float64 `yaml:"rps" json:"rps"`
+		Burst int     `yaml:"burst" json:"burst"`
+	} `yaml:"rate_limit" json:"rate_limit"`
 }
 
 func loadAppConfig(path string) (AppConfig, error) {
@@ -49,6 +53,8 @@ func main() {
 	if err != nil {
 		panic(fmt.Sprintf("讀取 config 失敗: %v", err))
 	}
+
+	fmt.Printf("CONFIG=%+v\n", cfg)
 
 	// 初始化 PostgreSQL
 	if err := db.Init(ctx, cfg.Database.DSN); err != nil {
@@ -75,14 +81,43 @@ func main() {
 	}
 	defer etcd.Close()
 
+	if err := wsserver.Start(ctx, "127.0.0.1", 8888); err != nil {
+		panic(fmt.Sprintf("啟動 websocket server 失敗: %v", err))
+	}
+
+	// available ticket
 	errCh, err := watcher.StartHTTPClient(ctx, []int{1, 2}, "127.0.0.1", 8888)
 	if err != nil {
 		panic(fmt.Sprintf("啟動剩餘票數 HTTP client 失敗: %v", err))
 	}
+	fmt.Println("WebSocket Server 啟動完成 :8888")
 
 	go func() {
 		for err := range errCh {
 			fmt.Println("送剩餘票數到 websocket server 失敗:", err)
+		}
+	}()
+
+	// sold ticket
+	soldErrCh, err := watcher.StartSoldTicketHTTPClient(
+		ctx,
+		[]int{1, 2},
+		"127.0.0.1",
+		8888,
+	)
+	if err != nil {
+		panic(fmt.Sprintf(
+			"啟動成交紀錄 HTTP client 失敗: %v",
+			err,
+		))
+	}
+
+	go func() {
+		for err := range soldErrCh {
+			fmt.Println(
+				"送成交紀錄到 websocket server 失敗:",
+				err,
+			)
 		}
 	}()
 

@@ -90,7 +90,7 @@ func InitEtcd(ctx context.Context, areas []AreaConfig) error {
 		limitStr := strconv.Itoa(area.Limit)
 
 		//初始化區域的前綴
-		if err := client.Put(ctx, area.Name, "area1 成功添加"); err != nil {
+		if err := client.Put(ctx, area.Name, "area 成功添加"); err != nil {
 			return fmt.Errorf("init %s/: %w", area.Name, err)
 		}
 
@@ -108,8 +108,9 @@ func InitEtcd(ctx context.Context, areas []AreaConfig) error {
 		if err := client.Put(ctx, area.Name+"/status", "on"); err != nil {
 			return fmt.Errorf("init %s/status: %w", area.Name, err)
 		}
+		fmt.Printf("[INIT] %s ready (limit=%d, current_limit=%d, status=on)\n", area.Name, area.Limit, area.Limit)
 	}
-	fmt.Println("ETCD後台已經完成初始化")
+	fmt.Println("[INIT] all areas initialized")
 	return nil
 }
 
@@ -125,6 +126,8 @@ const payingTTL = 30    // paying 標記的存活時間，覆蓋 Checkout 重試
 // ctx代表競爭鎖的人，沒有重刷就繼續等鎖，有重刷就不在對列等待。
 func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 	area := "area" + strconv.Itoa(td.Area)
+	fmt.Printf("[RESERVE] %s trying to reserve %s\n", td.UserName, area)
+
 	client := etcd.New()
 	session, err := concurrency.NewSession(client.Cli, concurrency.WithTTL(10))
 	if err != nil {
@@ -139,6 +142,7 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 		// 拿鎖失敗（ctx取消、etcd 掛了）
 		return false, err
 	}
+	fmt.Printf("[RESERVE] %s acquired lock %s\n", td.UserName, mutex_key)
 	// 以下為鎖的持有
 	ticket_prefix := area + "/holder"
 	paying_prefix := area + "/paying"
@@ -175,6 +179,7 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 		mutex.Unlock(ctx)
 		return false, err
 	}
+	fmt.Printf("[RESERVE] %s state: holder=%d paying=%d current_limit=%d\n", area, holderCount, payingCount, i)
 
 	got := false
 	if count < i {
@@ -192,12 +197,16 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 			mutex.Unlock(ctx)
 			return false, err
 		}
+		fmt.Printf("[RESERVE] ✓ %s reserved, created holder/%s (Lease %ds)\n", td.UserName, td.UserName, checkoutTTL)
 		got = true
+	} else {
+		fmt.Printf("[RESERVE] ✗ %s no available slot (occupied=%d limit=%d)\n", td.UserName, count, i)
 	}
 	// 當下沒有空位，釋放這個檢查鎖。
 
 	// 以上為鎖的持有
 	mutex.Unlock(ctx)
+	fmt.Printf("[RESERVE] %s released lock\n", td.UserName)
 	return got, nil
 }
 
@@ -205,6 +214,8 @@ func Lock_And_Hold(ctx context.Context, td TicketData) (bool, error) {
 // 若 holder 已過期（超時）回傳錯誤；若 current_limit 被並發修改則自動重試。
 func Checkout(ctx context.Context, td TicketData) error {
 	area := "area" + strconv.Itoa(td.Area)
+	fmt.Printf("[CHECKOUT] %s starting checkout %s\n", td.UserName, area)
+
 	client := etcd.New()
 
 	holderKey := area + "/holder/" + td.UserName
@@ -229,10 +240,13 @@ func Checkout(ctx context.Context, td TicketData) error {
 	}
 	if !verifyResp.Succeeded {
 		// holder 不存在，代表結帳時限已過
+		fmt.Printf("[CHECKOUT] ✗ %s holder expired, checkout window passed\n", td.UserName)
 		return fmt.Errorf("結帳時限已過，請重新搶票")
 	}
+	fmt.Printf("[CHECKOUT] ✓ %s holder verified, created paying/%s (Lease %ds)\n", td.UserName, td.UserName, payingTTL)
 
 	// 迴圈重試修改limit。
+	retries := 0
 	for {
 		// 讀取目前 current_limit，用來做 CAS 條件
 		curLimitStr, exist, err := client.Get(ctx, currentLimitKey)
@@ -249,6 +263,7 @@ func Checkout(ctx context.Context, td TicketData) error {
 		}
 
 		newLimitStr := strconv.FormatInt(curLimit-1, 10)
+		fmt.Printf("[CHECKOUT] CAS attempt: %d -> %d\n", curLimit, curLimit-1)
 
 		ops := []clientv3.Op{
 			clientv3.OpDelete(holderKey), // holder 已過期時為 no-op，不影響 Txn 結果
@@ -256,7 +271,8 @@ func Checkout(ctx context.Context, td TicketData) error {
 			clientv3.OpPut(currentLimitKey, newLimitStr),
 			clientv3.OpPut(soldKey, td.PhoneNum), // 與 current_limit 同一 Txn，Watcher 可用 ModRevision 比對判斷結帳成功
 		}
-		if curLimit-1 == 0 {
+		soldOut := curLimit-1 == 0
+		if soldOut {
 			// 票賣完，同一個 Txn 內順帶關閉售票
 			ops = append(ops, clientv3.OpPut(statusKey, "off"))
 		}
@@ -272,8 +288,15 @@ func Checkout(ctx context.Context, td TicketData) error {
 		}
 
 		if txnResp.Succeeded {
+			if soldOut {
+				fmt.Printf("[CHECKOUT] ✓ CAS success, %s SOLD OUT, status=off (retries=%d)\n", area, retries)
+			} else {
+				fmt.Printf("[CHECKOUT] ✓ CAS success (retries=%d)\n", retries)
+			}
 			return nil
 		}
+		retries++
+		fmt.Printf("[CHECKOUT] ↻ CAS conflict, retrying...\n")
 		// current_limit 被並發修改，重新讀取後重試
 	}
 }

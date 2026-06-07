@@ -76,7 +76,8 @@ func sendAvailableTicket(ctx context.Context, httpClient *http.Client, endpoint 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := httpClient.Do(req)
+	fmt.Printf("[BRIDGE] POST area=%d available=%d -> wsserver\n", areaID, available)
+	resp, err := httpClient.Do(req)  //這時候 Go 程式才會真正把這個 HTTP 封包透過網路卡發送到遠端伺服器，並阻擋（Block）等待對方的回應。
 	if err != nil {
 		return err
 	}

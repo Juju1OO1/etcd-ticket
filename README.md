@@ -22,6 +22,7 @@ etcd-ticket/
 - api gateway: 8080
 
 ```
+
 backend/
 ├── cmd/
 │   └── server/
@@ -35,7 +36,17 @@ backend/
 │   │
 │   ├── service/                 # 商業邏輯
 │   │   ├── ticket_service.go    # etcd 搶票核心（Lock_And_Hold、Checkout）
-│   │   └── order_service.go     # 訂單發布與消費（PublishOrder、StartOrderWorker）
+│   │   ├── ticket_watcher.go    # 監聽   
+│   │   └── order_service.go     # 訂單發布與消費（PublishOrder、StartOrderWorker）丟給 Redis
+│   │
+│   │
+│   ├── wsserver/
+│   │   └── wsserver.go
+│   │
+│   │
+│   ├── watcher/                 # watch 機制
+│   │   ├── available_ticket_ws.go
+│   │   └── sold_ticket_ws.go
 │   │
 │   ├── repository/              # DB 操作封裝
 │   │   └── order_repo.go        # InsertOrder() 寫入 PostgreSQL
@@ -57,8 +68,6 @@ backend/
 │   ├── lock/                    # 分散式鎖
 │   │   └── mutex.go
 │   │
-│   ├── watcher/                 # watch 機制
-│   │   └── ticket_watcher.go
 │   │
 │   └── model/                   # 資料結構
 │       └── ticket.go            # Order struct（對應 orders 表欄位）
@@ -181,7 +190,7 @@ docker/
 
 ## 環境需求
 
-1. NodeJS``` 20.20.2```
+1. NodeJS ```20.20.2```
 2. Go ```1.26.2```
 
 ## 如何啟動
@@ -216,6 +225,9 @@ cd backend
 
 // 啟動
 go run cmd/server/main.go &
+
+// 砍掉重練
+pkill -f "go run cmd/server/main.go"
 ```
 
 4. 啟動前端
@@ -224,8 +236,98 @@ go run cmd/server/main.go &
 // 目錄
 cd frontend
 
+// 切換 node version
+nvm use 20
+
 // 啟動
 npm create vite@latest .
 npm install
 npm run dev
+```
+
+## Flow Chart
+
+```mermaid
+flowchart TD
+
+    %% =========================
+    %% Frontend
+    %% =========================
+
+    FE[Frontend Web App]
+
+    %% =========================
+    %% API Layer
+    %% =========================
+
+    API[GIN API Server :8080]
+
+    FE -->|HTTP API| API
+
+    %% =========================
+    %% Ticket Service
+    %% =========================
+
+    API --> TS[ticket_service.go]
+
+    %% =========================
+    %% etcd Cluster
+    %% =========================
+
+    ETCD[(etcd Cluster)]
+
+    TS -->|Put/Get/Txn/Lock| ETCD
+
+    %% =========================
+    %% Watchers
+    %% =========================
+
+    TW[ticket_watcher.go]
+
+    ETCD -->|Watch current_limit holder paying sold| TW
+
+    %% =========================
+    %% WebSocket Notification
+    %% =========================
+
+    ATWS[available_ticket_ws.go]
+    STWS[sold_ticket_ws.go]
+
+    TW -->|Available Ticket Event| ATWS
+    TW -->|Sold Ticket Event| STWS
+
+    %% =========================
+    %% WebSocket Server
+    %% =========================
+
+    WSS[WebSocket Server :8888]
+
+    ATWS -->|HTTP POST| WSS
+    STWS -->|HTTP POST| WSS
+
+    FE <-->|WebSocket Subscribe| WSS
+
+    %% =========================
+    %% Redis Stream
+    %% =========================
+
+    RS[(Redis Stream)]
+
+    TS -->|PublishOrder| RS
+
+    %% =========================
+    %% Order Worker
+    %% =========================
+
+    OWS[order_service.go<br/>StartOrderWorker]
+
+    RS -->|Consume| OWS
+
+    %% =========================
+    %% PostgreSQL
+    %% =========================
+
+    PG[(PostgreSQL)]
+
+    OWS -->|InsertOrder| PG
 ```
